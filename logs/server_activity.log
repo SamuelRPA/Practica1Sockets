@@ -1,0 +1,62 @@
+[2026-03-07 12:47:18] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-07 12:47:22] [[33mWARNING[0m] [CNS.DBManager] Intento 1/3 de conexión a MySQL fallido: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+[2026-03-07 12:47:28] [[33mWARNING[0m] [CNS.DBManager] Intento 2/3 de conexión a MySQL fallido: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+[2026-03-07 12:47:34] [[33mWARNING[0m] [CNS.DBManager] Intento 3/3 de conexión a MySQL fallido: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+[2026-03-07 12:47:34] [[31mERROR[0m] [CNS.DBManager] No se pudo conectar a MySQL tras 3 intentos. El servidor funcionará sin persistencia.
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-07T16:47:34.947121
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-07 12:47:34] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-07 12:58:56] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:49515.
+[2026-03-07 13:00:01] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-07 13:00:01] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-07 13:04:17] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-07 13:04:17] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-07 13:04:30] [[33mWARNING[0m] [CNS.SocketServer] Conexión reiniciada por el nodo 'None'.
+[2026-03-07 13:04:39] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:52918.
+[2026-03-07 13:04:39] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'Cochabamba_Regional' desde ('127.0.0.1', 52918).
+[2026-03-07 13:04:39] [[32mINFO[0m] [CNS.SocketServer] Métricas recibidas | nodo='Cochabamba_Regional' | ip=192.168.10.50 | disco_libre=767.50GB | ram=38.8%
+[2026-03-07 13:04:39] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | nodo='Cochabamba_Regional' | disco_libre=767.50GB | ram=38.8%
+[2026-03-07 13:04:39] [[33mWARNING[0m] [CNS.DBManager] save_metrics: sin conexión DB (nodo=Cochabamba_Regional). Datos no persistidos.
+[2026-03-07 13:04:39] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'Cochabamba_Regional'.
+[2026-03-07 13:05:01] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=1 | capacity=1024.00 | free=767.50 | used=256.50
+[2026-03-07 13:05:01] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-07 13:05:11] [[33mWARNING[0m] [CNS.FailureMonitor] ALERTA: Nodo 'Cochabamba_Regional' SIN REPORTE desde hace 31.6 segundos — marcando como 'No Reporta'.
+[2026-03-07 13:05:11] [[33mWARNING[0m] [CNS.DBManager] update_node_status: sin conexión DB (nodo=Cochabamba_Regional).
+[2026-03-07 13:05:16] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (36.6s de inactividad).
+[2026-03-07 13:05:21] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (41.6s de inactividad).
+[2026-03-07 13:05:26] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (46.6s de inactividad).
+[2026-03-07 13:05:31] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (51.6s de inactividad).
+[2026-03-07 13:05:36] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (56.6s de inactividad).
+[2026-03-07 13:05:41] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (61.7s de inactividad).
+[2026-03-07 13:05:46] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (66.7s de inactividad).
+[2026-03-07 13:05:51] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (71.7s de inactividad).
+[2026-03-07 13:05:56] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (76.7s de inactividad).
+[2026-03-07 13:06:01] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (81.7s de inactividad).
+[2026-03-07 13:06:06] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (86.7s de inactividad).
+[2026-03-07 13:06:11] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (91.7s de inactividad).
+[2026-03-07 13:06:16] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (96.7s de inactividad).
+[2026-03-07 13:06:21] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (101.7s de inactividad).
+[2026-03-07 13:06:26] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (106.7s de inactividad).
+[2026-03-07 13:06:31] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (111.8s de inactividad).
+[2026-03-07 13:06:36] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (116.8s de inactividad).
+[2026-03-07 13:06:41] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (121.8s de inactividad).
+[2026-03-07 13:06:46] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (126.8s de inactividad).
+[2026-03-07 13:06:51] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (131.8s de inactividad).
+[2026-03-07 13:06:56] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (136.8s de inactividad).
+[2026-03-07 13:07:01] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (141.8s de inactividad).
+[2026-03-07 13:07:06] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (146.8s de inactividad).
+[2026-03-07 13:07:11] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (151.8s de inactividad).
+[2026-03-07 13:07:16] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (156.8s de inactividad).
+[2026-03-07 13:07:21] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (161.8s de inactividad).
+[2026-03-07 13:07:26] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (166.9s de inactividad).
+[2026-03-07 13:07:31] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (171.9s de inactividad).
+[2026-03-07 13:07:36] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (176.9s de inactividad).
+[2026-03-07 13:07:41] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (181.9s de inactividad).
+[2026-03-07 13:07:46] [DEBUG   ] [CNS.FailureMonitor] Nodo 'Cochabamba_Regional' continúa sin reportar (186.9s de inactividad).
+[2026-03-07 13:07:47] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-07 13:07:47] [[32mINFO[0m] [CNS.Main] Servidor CNS detenido. Hasta luego.
