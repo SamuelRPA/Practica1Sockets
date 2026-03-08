@@ -5,22 +5,24 @@ Servidor TCP asíncrono (asyncio) en el puerto 5000.
 ━━━ Protocolo de ENTRADA (Nodo → Servidor) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Formato JSON anidado (una línea terminada en \\n):
 {
-  "nodo":       "string",
-  "ip_origen":  "192.168.x.x",
-  "mac_origen": "AA:BB:CC:DD:EE:FF",
+  "nodo":            "string",   // DEBE ser minúsculas sin espacios (ej: 'oruro', 'lapaz')
+  "ip_origen":       "192.168.x.x",        // opcional
+  "mac_origen":      "AA:BB:CC:DD:EE:FF",  // opcional
+  "display_name":    "string",   // opcional; nombre legible (ej: 'Oruro Regional')
+  "uptime_seconds":  int,        // opcional; defecto 0
   "disco": {
     "nombre":    "string",    // ej: "/dev/sda" o "C:"
     "tipo":      "string",    // ej: "HDD" | "SSD" | "NVMe"
     "total_gb":  float,
-    "usado_gb":  float,
-    "libre_gb":  float,
+    "usado_gb":  float,       // también acepta "used_gb"
+    "libre_gb":  float,       // también acepta "free_gb"
     "iops":      int
   },
   "ram": {
     "total_gb":      float,
-    "usado_gb":      float,
-    "libre_gb":      float,
-    "porcentaje_uso": float   // 0.0 – 100.0
+    "usado_gb":      float,       // también acepta "used_gb"
+    "libre_gb":      float,       // también acepta "free_gb"
+    "porcentaje_uso": float        // 0.0 – 100.0
   },
   "estado": "string"          // opcional, defecto "Activo"
 }
@@ -81,59 +83,61 @@ def _unregister_client(nodo: Optional[str], writer: asyncio.StreamWriter) -> Non
         logger.warning("Nodo desconectado: '%s'.", nodo)
 
 
-# ── Validación y extracción del JSON anidado ──────────────────────────────────
+# ── Extracción del JSON anidado ───────────────────────────────────────────────
 
 def _validate_and_extract(message: dict) -> Optional[dict]:
     """
-    Valida el mensaje entrante y aplana los campos anidados de disco y ram.
+    Extrae y normaliza los campos del mensaje entrante.
 
-    Returns:
-        Diccionario plano listo para pasar a save_metrics(), o None si inválido.
+    Usa .get() con valores por defecto en TODOS los campos para que NUNCA
+    se rechace un mensaje ni se lance un KeyError.
+
+    Acepta variantes de campo:
+      - disco: "usado_gb" o "used_gb", "libre_gb" o "free_gb"
+      - uptime_seconds: nivel raíz o dentro de "ram"
+
+    Retorna None únicamente si el campo "nodo" está ausente por completo.
     """
-    # Campos raíz obligatorios
-    for field in ("nodo", "ip_origen", "mac_origen", "disco", "ram"):
-        if field not in message:
-            logger.warning("Campo obligatorio faltante: '%s'.", field)
-            return None
-
-    disco = message["disco"]
-    ram = message["ram"]
-
-    # Campos de disco obligatorios
-    for f in ("nombre", "tipo", "total_gb", "usado_gb", "libre_gb", "iops"):
-        if f not in disco:
-            logger.warning("Campo disco.'%s' faltante.", f)
-            return None
-
-    # Campos de RAM obligatorios (acepta tanto "porcentaje_uso" como "porcentaje")
-    for f in ("total_gb", "usado_gb", "libre_gb"):
-        if f not in ram:
-            logger.warning("Campo ram.'%s' faltante.", f)
-            return None
-    if "porcentaje_uso" not in ram and "porcentaje" not in ram:
-        logger.warning("Campo ram.'porcentaje_uso' (o 'porcentaje') faltante.")
+    if "nodo" not in message:
+        logger.warning("Mensaje sin campo 'nodo' — ignorado.")
         return None
 
-    # Soportar ambas variantes del campo de porcentaje RAM
-    ram_pct = ram.get("porcentaje_uso", ram.get("porcentaje", 0.0))
+    disco = message.get("disco") or {}
+    ram   = message.get("ram")   or {}
+
+    identifier = str(message["nodo"]).lower().strip()
+
+    # Disco: acepta usado_gb o used_gb; libre_gb o free_gb
+    total_gb = float(disco.get("total_gb", 0.0))
+    used_gb  = float(disco.get("usado_gb", disco.get("used_gb", 0.0)))
+    free_gb  = float(disco.get("libre_gb", disco.get("free_gb", total_gb - used_gb)))
+
+    # RAM: solo necesitamos total_gb
+    ram_gb = float(ram.get("total_gb", 0.0))
+
+    # uptime_seconds: raíz del mensaje o dentro de ram
+    uptime_seconds = int(
+        message.get("uptime_seconds", ram.get("uptime_seconds", 0))
+    )
 
     return {
-        "nodo":          str(message["nodo"]),
-        "ip_origen":     str(message["ip_origen"]),
-        "mac_origen":    str(message["mac_origen"]),
-        "estado":        str(message.get("estado", "Activo")),
-        # disco
-        "disco_nombre":   str(disco["nombre"]),
-        "disco_tipo":     str(disco["tipo"]),
-        "disco_total_gb": float(disco["total_gb"]),
-        "disco_usado_gb": float(disco["usado_gb"]),
-        "disco_libre_gb": float(disco["libre_gb"]),
-        "disco_iops":     int(disco["iops"]),
-        # ram
-        "ram_total_gb":   float(ram["total_gb"]),
-        "ram_usado_gb":   float(ram["usado_gb"]),
-        "ram_libre_gb":   float(ram["libre_gb"]),
-        "ram_porcentaje": float(ram_pct),
+        # Claves del SP sp_InsertMetricAndUpdateNode
+        "identifier":     identifier,
+        "display_name":   str(message.get("display_name", identifier)),
+        "total_gb":       total_gb,
+        "used_gb":        used_gb,
+        "free_gb":        free_gb,
+        "iops":           int(disco.get("iops", 0)),
+        "disk_name":      str(disco.get("nombre", disco.get("name", "unknown"))),
+        "disk_type":      str(disco.get("tipo",   disco.get("type",  "HDD"))),
+        "ram_gb":         ram_gb,
+        "uptime_seconds": uptime_seconds,
+        # Campos extra para logging / memoria interna
+        "ip_origen":      str(message.get("ip_origen",  "")),
+        "mac_origen":     str(message.get("mac_origen", "")),
+        "estado":         str(message.get("estado", "Activo")),
+        "free_gb_disco":  free_gb,
+        "used_gb_disco":  used_gb,
     }
 
 
@@ -167,28 +171,29 @@ async def _handle_client(
                 message = json.loads(line)
             except json.JSONDecodeError:
                 logger.warning(
-                    "Mensaje malformado desde %s:%s — ignorado. Raw: %r",
-                    peer[0], peer[1], line[:120],
-                )
-                continue
-
-            # ── Validación y extracción de campos ────────────────────────────
-            payload = _validate_and_extract(message)
-            if payload is None:
-                logger.warning(
-                    "Mensaje con estructura inválida desde %s:%s — ignorado.",
+                    "Mensaje malformado desde %s:%s — ignorado.",
                     peer[0], peer[1],
                 )
                 continue
 
-            nodo = payload["nodo"]
+            # ── Extracción con tolerancia a variantes de campo ───────────────
+            payload = _validate_and_extract(message)
+            if payload is None:
+                logger.warning(
+                    "Mensaje sin campo 'nodo' desde %s:%s — ignorado.",
+                    peer[0], peer[1],
+                )
+                continue
+
+            nodo = payload["identifier"]
             _register_client(nodo, writer)
 
             logger.info(
-                "Métricas recibidas | nodo='%s' | ip=%s | "
-                "disco_libre=%.2fGB | ram=%.1f%%",
-                nodo, payload["ip_origen"],
-                payload["disco_libre_gb"], payload["ram_porcentaje"],
+                "Métricas recibidas | identifier='%s' | ip=%s | free_gb=%.2f | ram_gb=%.2f",
+                nodo,
+                payload.get("ip_origen", "?"),
+                payload.get("free_gb", 0.0),
+                payload.get("ram_gb", 0.0),
             )
 
             # ── Callback hacia servicios (consolidator / db) ─────────────────
@@ -231,24 +236,8 @@ async def send_command(
     """
     Envía un comando al nodo usando el formato JSON de salida acordado.
 
-    Args:
-        nodo:    Identificador del nodo destino.
-        comando: Nombre del comando (ej: 'RESCAN', 'REBOOT').
-        mensaje: Descripción libre del comando (opcional).
-        origen:  Identificador del emisor (defecto 'admin@dashboard').
-
     Returns:
         True si el envío fue exitoso, False si el nodo no está conectado.
-
-    Formato JSON enviado:
-    {
-      "tipo":       "comando",
-      "comando":    "<COMANDO>",
-      "timestamp":  "ISO8601",
-      "origen":     "admin@dashboard",
-      "mensaje":    "<descripción>",
-      "id_mensaje": "<uuid4>"
-    }
     """
     writer = active_clients.get(nodo)
     if writer is None:

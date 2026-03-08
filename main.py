@@ -82,11 +82,13 @@ def _console_worker(loop: asyncio.AbstractEventLoop, stop_event: asyncio.Event) 
 
         # ── STATUS ────────────────────────────────────────────────────────────
         elif cmd == "STATUS":
-            totals = consolidator.get_cluster_totals()
             flagged = monitor.get_flagged_nodes()
+            totals = consolidator.get_cluster_totals(exclude=set(flagged))
+            active_nodes = list(consolidator._node_metrics.keys())
+            reporting = [n for n in active_nodes if n not in flagged]
             print(
-                f"\n  Cluster Summary\n"
-                f"  ├─ Nodos en memoria : {totals['node_count']}\n"
+                f"\n  Cluster Summary (datos en memoria — sin DB)\n"
+                f"  ├─ Nodos reportando : {len(reporting)} → {reporting if reporting else 'ninguno'}\n"
                 f"  ├─ Capacity Total   : {totals['capacity_total']:.2f} GB\n"
                 f"  ├─ Used Total       : {totals['used_total']:.2f} GB\n"
                 f"  ├─ Free Total       : {totals['free_total']:.2f} GB\n"
