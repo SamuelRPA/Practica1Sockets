@@ -2,12 +2,16 @@
 server/database/db_manager.py
 Gestor de la base de datos MySQL para el CNS Server.
 
-Tabla objetivo: metricas
-Campos: nodo, ip_origen, mac_origen, timestamp, disco_nombre, disco_tipo,
-        disco_total_gb, disco_usado_gb, disco_libre_gb, disco_iops,
-        ram_total_gb, ram_usado_gb, ram_libre_gb, ram_porcentaje, estado
+Base de datos: storage_cluster
+Tablas objetivo:
+  - Nodes   (identifier, display_name, status, ...)
+  - Metrics (identifier, total_gb, used_gb, free_gb, iops,
+             disk_name, disk_type, ram_gb, uptime_seconds, recorded_at)
 
-Índices: idx_nodo, idx_timestamp, idx_ip, idx_mac
+Operaciones principales:
+  - save_metrics  → CALL sp_InsertMetricAndUpdateNode(?,?,?,?,?,?,?,?,?,?)
+  - update_node_status → UPDATE Nodes SET status = ? WHERE identifier = ?
+  - get_cluster_summary → SELECT de la tabla Metrics
 """
 
 import time
@@ -82,84 +86,68 @@ class DBManager:
 
     def save_metrics(
         self,
-        nodo: str,
-        ip_origen: str,
-        mac_origen: str,
-        disco_nombre: str,
-        disco_tipo: str,
-        disco_total_gb: float,
-        disco_usado_gb: float,
-        disco_libre_gb: float,
-        disco_iops: int,
-        ram_total_gb: float,
-        ram_usado_gb: float,
-        ram_libre_gb: float,
-        ram_porcentaje: float,
-        estado: str = "Activo",
+        identifier: str,
+        display_name: str,
+        total_gb: float,
+        used_gb: float,
+        free_gb: float,
+        iops: int,
+        disk_name: str,
+        disk_type: str,
+        ram_gb: float,
+        uptime_seconds: int = 0,
     ) -> bool:
         """
-        Inserta una fila en la tabla 'metricas'.
+        Llama al Stored Procedure sp_InsertMetricAndUpdateNode.
 
-        Args:
-            nodo:           Identificador del nodo (ej: 'nodo-norte-01').
-            ip_origen:      Dirección IP del nodo.
-            mac_origen:     Dirección MAC del nodo.
-            disco_nombre:   Nombre del dispositivo de disco (ej: '/dev/sda').
-            disco_tipo:     Tipo de disco (ej: 'HDD', 'SSD').
-            disco_total_gb: Capacidad total del disco en GB.
-            disco_usado_gb: Espacio usado del disco en GB.
-            disco_libre_gb: Espacio libre del disco en GB.
-            disco_iops:     IOPS del disco.
-            ram_total_gb:   RAM total en GB.
-            ram_usado_gb:   RAM usada en GB.
-            ram_libre_gb:   RAM libre en GB.
-            ram_porcentaje: Porcentaje de uso de RAM (0–100).
-            estado:         Estado del nodo (defecto 'Activo').
+        Parámetros (en orden exacto del SP):
+            identifier:     ID único del nodo (ej: 'oruro', 'lapaz').
+            display_name:   Nombre legible del nodo (ej: 'Oruro').
+            total_gb:       Capacidad total del disco en GB.
+            used_gb:        Espacio usado del disco en GB.
+            free_gb:        Espacio libre del disco en GB.
+            iops:           Operaciones de E/S por segundo.
+            disk_name:      Nombre del dispositivo (ej: '/dev/sda', 'C:').
+            disk_type:      Tipo de disco ('HDD' | 'SSD' | 'NVMe').
+            ram_gb:         RAM total en GB.
+            uptime_seconds: Uptime del nodo en segundos (defecto 0).
 
         Returns:
-            True si la inserción fue exitosa, False en caso contrario.
+            True si el SP se ejecutó correctamente, False en caso contrario.
         """
         conn = self._get_connection()
         if conn is None:
             logger.warning(
-                "save_metrics: sin conexión DB (nodo=%s). Datos no persistidos.", nodo
+                "save_metrics: sin conexión DB (identifier=%s). Datos no persistidos.",
+                identifier,
             )
             return False
 
         try:
             cursor = conn.cursor()
-            cursor.execute(
-                """
-                INSERT INTO metricas (
-                    nodo, ip_origen, mac_origen, timestamp,
-                    disco_nombre, disco_tipo,
-                    disco_total_gb, disco_usado_gb, disco_libre_gb, disco_iops,
-                    ram_total_gb, ram_usado_gb, ram_libre_gb, ram_porcentaje,
-                    estado
-                ) VALUES (
-                    %s, %s, %s, %s,
-                    %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s
-                )
-                """,
+            cursor.callproc(
+                "sp_InsertMetricAndUpdateNode",
                 (
-                    nodo, ip_origen, mac_origen, datetime.utcnow(),
-                    disco_nombre, disco_tipo,
-                    disco_total_gb, disco_usado_gb, disco_libre_gb, disco_iops,
-                    ram_total_gb, ram_usado_gb, ram_libre_gb, ram_porcentaje,
-                    estado,
+                    identifier,
+                    display_name,
+                    total_gb,
+                    used_gb,
+                    free_gb,
+                    iops,
+                    disk_name,
+                    disk_type,
+                    ram_gb,
+                    uptime_seconds,
                 ),
             )
             logger.debug(
-                "Métricas guardadas | nodo=%s | ip=%s | disco=%.2fGB libre | ram=%.1f%%",
-                nodo, ip_origen, disco_libre_gb, ram_porcentaje,
+                "SP ejecutado | identifier=%s | free_gb=%.2f | ram_gb=%.2f",
+                identifier, free_gb, ram_gb,
             )
             return True
 
         except Error as exc:
-            logger.error("Error en save_metrics (nodo=%s): %s", nodo, exc)
+            logger.error("Error en save_metrics (identifier=%s): %s", identifier, exc)
             return False
         finally:
             cursor.close()
@@ -167,50 +155,42 @@ class DBManager:
 
     # ── update_node_status ────────────────────────────────────────────────────
 
-    def update_node_status(self, nodo: str, status: str) -> bool:
+    def update_node_status(self, identifier: str, status: str) -> bool:
         """
-        Inserta una fila de estado en 'metricas' marcando el nodo con el nuevo
-        estado y dejando los campos de métricas en NULL para indicar que es un
-        registro de estado, no de medición.
+        Actualiza el campo 'status' de un nodo en la tabla Nodes.
+
+        Cuando el monitor de fallos detecta que un nodo dejó de reportar,
+        llama a este método con status='No Reporta'.
 
         Args:
-            nodo:   Identificador del nodo.
-            status: Nuevo estado (ej: 'Activo', 'No Reporta', 'Reiniciando').
+            identifier: Identificador único del nodo (ej: 'oruro').
+            status:     Nuevo estado ('No Reporta', 'Activo', etc.).
 
         Returns:
-            True si la inserción fue exitosa, False en caso contrario.
+            True si el UPDATE fue exitoso, False en caso contrario.
         """
         conn = self._get_connection()
         if conn is None:
-            logger.warning("update_node_status: sin conexión DB (nodo=%s).", nodo)
+            logger.warning(
+                "update_node_status: sin conexión DB (identifier=%s).", identifier
+            )
             return False
 
         try:
             cursor = conn.cursor()
             cursor.execute(
-                """
-                INSERT INTO metricas (
-                    nodo, ip_origen, mac_origen, timestamp,
-                    disco_nombre, disco_tipo,
-                    disco_total_gb, disco_usado_gb, disco_libre_gb, disco_iops,
-                    ram_total_gb, ram_usado_gb, ram_libre_gb, ram_porcentaje,
-                    estado
-                ) VALUES (
-                    %s, NULL, NULL, %s,
-                    NULL, NULL,
-                    NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL,
-                    %s
-                )
-                """,
-                (nodo, datetime.utcnow(), status),
+                "UPDATE Nodes SET status = %s WHERE identifier = %s",
+                (status, identifier),
             )
-            logger.info("Estado de nodo '%s' registrado como '%s'.", nodo, status)
+            logger.info(
+                "Estado del nodo '%s' actualizado a '%s' (%d fila(s) afectada(s)).",
+                identifier, status, cursor.rowcount,
+            )
             return True
 
         except Error as exc:
             logger.error(
-                "Error en update_node_status (nodo=%s): %s", nodo, exc
+                "Error en update_node_status (identifier=%s): %s", identifier, exc
             )
             return False
         finally:
@@ -221,18 +201,19 @@ class DBManager:
 
     def get_cluster_summary(self) -> dict:
         """
-        Retorna un resumen del cluster con la última métrica por nodo.
+        Retorna un resumen del cluster con la última métrica por nodo,
+        consultando la tabla Metrics (nueva estructura).
 
         Returns:
             {
-              "nodes": [{"nodo": str, "ip_origen": str, "mac_origen": str,
-                         "disco_total_gb": float, "disco_libre_gb": float,
-                         "disco_iops": int, "ram_total_gb": float,
-                         "ram_porcentaje": float, "estado": str,
-                         "timestamp": str}, ...],
-              "capacity_total": float,  # Σ disco_total_gb
-              "free_total":     float,  # Σ disco_libre_gb
-              "used_total":     float,  # Σ disco_usado_gb
+              "nodes": [{"identifier": str, "display_name": str,
+                         "total_gb": float, "used_gb": float, "free_gb": float,
+                         "iops": int, "disk_name": str, "disk_type": str,
+                         "ram_gb": float, "uptime_seconds": int,
+                         "recorded_at": str}, ...],
+              "capacity_total": float,  # Σ total_gb
+              "free_total":     float,  # Σ free_gb
+              "used_total":     float,  # Σ used_gb
             }
         """
         empty = {
@@ -248,30 +229,30 @@ class DBManager:
 
         try:
             cursor = conn.cursor(dictionary=True)
-            # Obtener la última fila por nodo (usando la clave primaria AUTO_INCREMENT
-            # o el timestamp más reciente)
+            # Última métrica por identifier (nodo) de la tabla Metrics
             cursor.execute(
                 """
                 SELECT m.*
-                FROM metricas m
+                FROM Metrics m
                 INNER JOIN (
-                    SELECT nodo, MAX(timestamp) AS max_ts
-                    FROM metricas
-                    GROUP BY nodo
+                    SELECT identifier, MAX(recorded_at) AS max_ts
+                    FROM Metrics
+                    GROUP BY identifier
                 ) AS latest
-                    ON m.nodo = latest.nodo AND m.timestamp = latest.max_ts
-                ORDER BY m.nodo
+                    ON m.identifier = latest.identifier
+                    AND m.recorded_at = latest.max_ts
+                ORDER BY m.identifier
                 """
             )
             rows = cursor.fetchall()
 
-            capacity_total = sum((r["disco_total_gb"] or 0) for r in rows)
-            free_total = sum((r["disco_libre_gb"] or 0) for r in rows)
-            used_total = sum((r["disco_usado_gb"] or 0) for r in rows)
+            capacity_total = sum((r["total_gb"] or 0) for r in rows)
+            free_total     = sum((r["free_gb"]  or 0) for r in rows)
+            used_total     = sum((r["used_gb"]  or 0) for r in rows)
 
             for row in rows:
-                if row.get("timestamp"):
-                    row["timestamp"] = row["timestamp"].isoformat()
+                if row.get("recorded_at"):
+                    row["recorded_at"] = row["recorded_at"].isoformat()
 
             logger.debug(
                 "Resumen cluster: %d nodos | capacity=%.2f | free=%.2f",

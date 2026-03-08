@@ -2,15 +2,16 @@
 server/services/metrics_consolidator.py
 Lógica de consolidación de métricas del cluster.
 
-Ahora trabaja con el payload aplanado proveniente de socket_server._validate_and_extract():
-  nodo, ip_origen, mac_origen, estado,
-  disco_nombre, disco_tipo, disco_total_gb, disco_usado_gb, disco_libre_gb, disco_iops,
-  ram_total_gb, ram_usado_gb, ram_libre_gb, ram_porcentaje
+Ahora trabaja con el payload aplanado proveniente de socket_server._validate_and_extract().
+Campos en uso:
+  identifier, display_name, total_gb, used_gb, free_gb, iops,
+  disk_name, disk_type, ram_gb, uptime_seconds
+  (más alias internos: free_gb_disco, used_gb_disco para los totales en memoria)
 
 Calcula:
-  Capacity_Total = Σ disco_total_gb
-  Free_Total     = Σ disco_libre_gb
-  Used_Total     = Σ disco_usado_gb
+  Capacity_Total = Σ total_gb
+  Free_Total     = Σ free_gb
+  Used_Total     = Σ used_gb_disco
 """
 
 import asyncio
@@ -49,10 +50,10 @@ async def on_metrics_received(nodo: str, payload: dict) -> None:
     _node_metrics[nodo] = {**payload, "ts": datetime.utcnow()}
 
     logger.debug(
-        "Consolidado | nodo='%s' | disco_libre=%.2fGB | ram=%.1f%%",
+        "Consolidado | identifier='%s' | free_gb=%.2f | ram_gb=%.2f",
         nodo,
-        payload.get("disco_libre_gb", 0.0),
-        payload.get("ram_porcentaje", 0.0),
+        payload.get("free_gb", 0.0),
+        payload.get("ram_gb", 0.0),
     )
 
     # Persistencia en DB (en thread pool para no bloquear asyncio)
@@ -62,51 +63,54 @@ async def on_metrics_received(nodo: str, payload: dict) -> None:
             await loop.run_in_executor(
                 None,
                 lambda: _db_save_callback(
-                    nodo=payload["nodo"],
-                    ip_origen=payload["ip_origen"],
-                    mac_origen=payload["mac_origen"],
-                    disco_nombre=payload["disco_nombre"],
-                    disco_tipo=payload["disco_tipo"],
-                    disco_total_gb=payload["disco_total_gb"],
-                    disco_usado_gb=payload["disco_usado_gb"],
-                    disco_libre_gb=payload["disco_libre_gb"],
-                    disco_iops=payload["disco_iops"],
-                    ram_total_gb=payload["ram_total_gb"],
-                    ram_usado_gb=payload["ram_usado_gb"],
-                    ram_libre_gb=payload["ram_libre_gb"],
-                    ram_porcentaje=payload["ram_porcentaje"],
-                    estado=payload.get("estado", "Activo"),
+                    identifier    =payload["identifier"],
+                    display_name  =payload.get("display_name", payload["identifier"]),
+                    total_gb      =payload["total_gb"],
+                    used_gb       =payload["used_gb"],
+                    free_gb       =payload["free_gb"],
+                    iops          =payload["iops"],
+                    disk_name     =payload["disk_name"],
+                    disk_type     =payload["disk_type"],
+                    ram_gb        =payload["ram_gb"],
+                    uptime_seconds=payload.get("uptime_seconds", 0),
                 ),
             )
         except Exception as exc:  # noqa: BLE001
             logger.error("Error al persistir métricas del nodo '%s': %s", nodo, exc)
 
 
-def get_cluster_totals() -> dict[str, Any]:
+def get_cluster_totals(exclude: set = None) -> dict:
     """
     Calcula los totales del cluster a partir de los últimos datos en memoria.
+    Los nodos en `exclude` (ej: marcados como 'No Reporta') se omiten del cálculo.
+
+    Args:
+        exclude: Conjunto de identifiers a ignorar (defecto: ninguno).
 
     Returns:
         {
-          "capacity_total": float,   # Σ disco_total_gb
-          "free_total":     float,   # Σ disco_libre_gb
-          "used_total":     float,   # Σ disco_usado_gb
+          "capacity_total": float,   # Σ total_gb
+          "free_total":     float,   # Σ free_gb
+          "used_total":     float,   # Σ used_gb_disco
           "node_count":     int,
         }
     """
-    capacity_total = sum(v.get("disco_total_gb", 0.0) for v in _node_metrics.values())
-    free_total     = sum(v.get("disco_libre_gb", 0.0) for v in _node_metrics.values())
-    used_total     = sum(v.get("disco_usado_gb", 0.0) for v in _node_metrics.values())
+    excluded = exclude or set()
+    active = {k: v for k, v in _node_metrics.items() if k not in excluded}
+
+    capacity_total = sum(v.get("total_gb",     0.0) for v in active.values())
+    free_total     = sum(v.get("free_gb",       0.0) for v in active.values())
+    used_total     = sum(v.get("used_gb_disco", 0.0) for v in active.values())
 
     logger.debug(
-        "Totales cluster | nodos=%d | capacity=%.2f | free=%.2f | used=%.2f",
-        len(_node_metrics), capacity_total, free_total, used_total,
+        "Totales cluster | nodos=%d (excluidos=%d) | capacity=%.2f | free=%.2f | used=%.2f",
+        len(active), len(excluded), capacity_total, free_total, used_total,
     )
     return {
         "capacity_total": capacity_total,
         "free_total":     free_total,
         "used_total":     used_total,
-        "node_count":     len(_node_metrics),
+        "node_count":     len(active),
     }
 
 
