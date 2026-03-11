@@ -1,34 +1,43 @@
 """
 server/database/db_config.py
-Configuración de conexión a MySQL.
+Configuración de conexión a MySQL (Railway).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NOTA PARA EL EQUIPO DE BASE DE DATOS:
-  Complete los valores de DB_HOST, DB_USER, DB_PASSWORD y DB_NAME
-  con las credenciales reales de su instancia MySQL.
+NOTA: Rellene DB_PASSWORD con la contraseña real antes de arrancar.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
-# ── Credenciales MySQL ─────────────────────────────────────────────────────────
-DB_HOST: str = "localhost"          # Host del servidor MySQL
-DB_PORT: int = 3306                 # Puerto MySQL (defecto: 3306)
-DB_USER: str = "cns_user"          # Usuario de la base de datos
-DB_PASSWORD: str = "changeme"      # Contraseña — reemplazar en producción
-DB_NAME: str = "storage_cluster"   # Nombre de la base de datos
+# ── Credenciales Railway ───────────────────────────────────────────────────────
+DB_HOST:     str = "hopper.proxy.rlwy.net"
+DB_PORT:     int = 46975
+DB_USER:     str = "root"
+DB_PASSWORD: str = "YCDIrjByQIaluZLzAEXlifHCyNPTfZpu"          
+DB_NAME:     str = "railway"
+SSL_MODE:    str = "REQUIRED"
+
+# ── Dict completo para el pool de conexiones ─────────────────────────────────
+DB_CONFIG: dict = {
+    "host":         DB_HOST,
+    "port":         DB_PORT,
+    "user":         DB_USER,
+    "password":     DB_PASSWORD,
+    "database":     DB_NAME,
+    "ssl_disabled": False,      # SSL habilitado (Railway lo requiere)
+}
 
 # ── Pool de conexiones ─────────────────────────────────────────────────────────
-POOL_NAME: str = "cns_pool"
-POOL_SIZE: int = 5                  # Conexiones simultáneas máximas
+POOL_NAME: str   = "cns_pool"
+POOL_SIZE: int   = 5           # Conexiones simultáneas máximas
 
 # ── Reintentos ────────────────────────────────────────────────────────────────
-CONNECTION_RETRIES: int = 3         # Intentos antes de abortar
-RETRY_DELAY_SECONDS: float = 2.0   # Espera entre reintentos
+CONNECTION_RETRIES:  int   = 3
+RETRY_DELAY_SECONDS: float = 2.0
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Esquema SQL esperado (referencia para el equipo de DB):
 #
 #  CREATE TABLE IF NOT EXISTS Nodes (
 #      id           INT           NOT NULL AUTO_INCREMENT,
-#      identifier   VARCHAR(64)   NOT NULL UNIQUE,   -- 'oruro', 'lapaz' ...
+#      identifier   VARCHAR(64)   NOT NULL UNIQUE,   -- 'cochabamba', 'lapaz'...
 #      display_name VARCHAR(128)  DEFAULT NULL,
 #      status       VARCHAR(32)   NOT NULL DEFAULT 'Activo',
 #      PRIMARY KEY (id),
@@ -36,7 +45,7 @@ RETRY_DELAY_SECONDS: float = 2.0   # Espera entre reintentos
 #  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 #
 #  CREATE TABLE IF NOT EXISTS Metrics (
-#      id             BIGINT  NOT NULL AUTO_INCREMENT,
+#      id             BIGINT       NOT NULL AUTO_INCREMENT,
 #      identifier     VARCHAR(64)  NOT NULL,
 #      total_gb       FLOAT        DEFAULT NULL,
 #      used_gb        FLOAT        DEFAULT NULL,

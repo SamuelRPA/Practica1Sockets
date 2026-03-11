@@ -1,5 +1,6 @@
 import socket
 import json
+import time
 
 def test_final():
     try:
@@ -26,11 +27,14 @@ def test_final():
                 }
             }
             
-            s.sendall(json.dumps(payload).encode('utf-8'))
+            s.sendall((json.dumps(payload) + "\n").encode('utf-8'))
             print("🚀 Envío exitoso. Revisa la consola del servidor.")
             print("📩 Respuesta:", s.recv(1024).decode())
     except Exception as e:
         print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
-    test_final()
+    while True: # Esto mantendrá al cliente enviando datos
+        test_final()
+        print("⏳ Esperando 10 segundos para el siguiente envío...")
+        time.sleep(50)

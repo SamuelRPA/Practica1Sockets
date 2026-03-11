@@ -92,8 +92,9 @@ def _validate_and_extract(message: dict) -> Optional[dict]:
     Usa .get() con valores por defecto en TODOS los campos para que NUNCA
     se rechace un mensaje ni se lance un KeyError.
 
-    Acepta variantes de campo:
-      - disco: "usado_gb" o "used_gb", "libre_gb" o "free_gb"
+    Mapeo inteligente de claves:
+      - disco.used_gb  (preferido) o disco.usado_gb  (alias español)
+      - disco.free_gb  (preferido) o disco.libre_gb  (alias español)
       - uptime_seconds: nivel raíz o dentro de "ram"
 
     Retorna None únicamente si el campo "nodo" está ausente por completo.
@@ -102,22 +103,25 @@ def _validate_and_extract(message: dict) -> Optional[dict]:
         logger.warning("Mensaje sin campo 'nodo' — ignorado.")
         return None
 
-    disco = message.get("disco") or {}
-    ram   = message.get("ram")   or {}
+    # Extraer sub-objetos con fallback a dict vacío
+    disco = message.get("disco", {}) or {}
+    ram   = message.get("ram",   {}) or {}
 
     identifier = str(message["nodo"]).lower().strip()
 
-    # Disco: acepta usado_gb o used_gb; libre_gb o free_gb
-    total_gb = float(disco.get("total_gb", 0.0))
-    used_gb  = float(disco.get("usado_gb", disco.get("used_gb", 0.0)))
-    free_gb  = float(disco.get("libre_gb", disco.get("free_gb", total_gb - used_gb)))
+    # Extraer con valores por defecto para que nunca dé 0 por error de llave
+    total_gb = float(disco.get("total_gb", 0.0) or 0.0)
 
-    # RAM: solo necesitamos total_gb
-    ram_gb = float(ram.get("total_gb", 0.0))
+    # Prioridad: clave inglesa (used_gb) → alias español (usado_gb) → 0.0
+    used_gb  = float(disco.get("used_gb",  disco.get("usado_gb",  0.0)) or 0.0)
+    free_gb  = float(disco.get("free_gb",  disco.get("libre_gb",  total_gb - used_gb)) or 0.0)
+    iops     = int(disco.get("iops", 0) or 0)
 
-    # uptime_seconds: raíz del mensaje o dentro de ram
+    ram_gb = float(ram.get("total_gb", 0.0) or 0.0)
+
+    # uptime_seconds: nivel raíz del mensaje o dentro de ram
     uptime_seconds = int(
-        message.get("uptime_seconds", ram.get("uptime_seconds", 0))
+        message.get("uptime_seconds", ram.get("uptime_seconds", 0)) or 0
     )
 
     return {
@@ -127,7 +131,7 @@ def _validate_and_extract(message: dict) -> Optional[dict]:
         "total_gb":       total_gb,
         "used_gb":        used_gb,
         "free_gb":        free_gb,
-        "iops":           int(disco.get("iops", 0)),
+        "iops":           iops,
         "disk_name":      str(disco.get("nombre", disco.get("name", "unknown"))),
         "disk_type":      str(disco.get("tipo",   disco.get("type",  "HDD"))),
         "ram_gb":         ram_gb,
@@ -136,9 +140,13 @@ def _validate_and_extract(message: dict) -> Optional[dict]:
         "ip_origen":      str(message.get("ip_origen",  "")),
         "mac_origen":     str(message.get("mac_origen", "")),
         "estado":         str(message.get("estado", "Activo")),
-        "free_gb_disco":  free_gb,
-        "used_gb_disco":  used_gb,
     }
+
+
+# ── Estado en memoria (nodos activos) ────────────────────────────────────────
+# active_nodes se actualiza CON PRIORIDAD RAM: siempre antes de intentar DB.
+# { identifier -> {payload + "ts": datetime} }
+active_nodes: dict[str, dict] = {}
 
 
 # ── Handler principal de cada conexión ────────────────────────────────────────
@@ -151,66 +159,121 @@ async def _handle_client(
     peer = writer.get_extra_info("peername", ("?", "?"))
     logger.info("Conexión entrante desde %s:%s.", peer[0], peer[1])
 
+    buf = b""   # buffer acumulador para mensajes sin \n al final
+
     try:
         while True:
-            # Leer hasta '\n' — funciona aunque el cliente no cierre la conexión
+            # Leer chunk (hasta \n o hasta 64KB si no hay \n)
             try:
-                raw_line = await reader.readline()
+                chunk = await reader.readuntil(b"\n")
             except asyncio.IncompleteReadError as e:
-                raw_line = e.partial
+                # EOF: el cliente cerró la conexión sin enviar \n
+                chunk = e.partial
+            except asyncio.LimitOverrunError:
+                chunk = await reader.read(65536)
 
-            if not raw_line:
-                break  # El cliente cerró la conexión
+            buf += chunk
 
-            line = raw_line.decode("utf-8").strip()
+            if not buf:
+                break  # conexión cerrada, buffer vacío
+
+            line = buf.decode("utf-8", errors="replace").strip()
+            buf = b""   # limpiar buffer tras consumir
+
             if not line:
                 continue
 
             # ── Decodificación JSON ──────────────────────────────────────────
             try:
-                message = json.loads(line)
-            except json.JSONDecodeError:
+                data = json.loads(line)
+            except json.JSONDecodeError as exc:
                 logger.warning(
-                    "Mensaje malformado desde %s:%s — ignorado.",
-                    peer[0], peer[1],
+                    "Mensaje malformado desde %s:%s — ignorado. (%s)",
+                    peer[0], peer[1], exc,
                 )
+                if not chunk:   # no hay más datos que esperar
+                    break
                 continue
 
-            # ── Extracción con tolerancia a variantes de campo ───────────────
-            payload = _validate_and_extract(message)
-            if payload is None:
+            logger.info(
+                "DEBUG: Datos recibidos del cliente: llaves_raíz=%s | disco=%s",
+                list(data.keys()),
+                list((data.get("disco") or {}).keys()),
+            )
+
+            # ── Respuesta inmediata al cliente (antes de procesar DB) ─────────
+            writer.write(b"OK\n")
+            await writer.drain()
+
+            # ── Extracción anidada con valores por defecto ────────────────────
+            if "nodo" not in data:
                 logger.warning(
                     "Mensaje sin campo 'nodo' desde %s:%s — ignorado.",
                     peer[0], peer[1],
                 )
+                if not chunk:
+                    break
                 continue
 
-            nodo = payload["identifier"]
+            nodo = str(data["nodo"]).lower().strip()
+
+            total_gb       = data.get("disco", {}).get("total_gb",       0.0) or 0.0
+            used_gb        = data.get("disco", {}).get("used_gb",         data.get("disco", {}).get("usado_gb", 0.0)) or 0.0
+            free_gb        = data.get("disco", {}).get("free_gb",         data.get("disco", {}).get("libre_gb",  total_gb - used_gb)) or 0.0
+            iops           = data.get("disco", {}).get("iops",            0) or 0
+            disk_name      = data.get("disco", {}).get("nombre",          data.get("disco", {}).get("name", "unknown"))
+            disk_type      = data.get("disco", {}).get("tipo",            data.get("disco", {}).get("type", "HDD"))
+            ram_gb         = data.get("ram",   {}).get("total_gb",        0.0) or 0.0
+            uptime_seconds = data.get("uptime_seconds", data.get("ram", {}).get("uptime_seconds", 0)) or 0
+            display_name   = data.get("display_name", nodo)
+
+            total_gb       = float(total_gb)
+            used_gb        = float(used_gb)
+            free_gb        = float(free_gb)
+            iops           = int(iops)
+            ram_gb         = float(ram_gb)
+            uptime_seconds = int(uptime_seconds)
+            display_name   = str(display_name)
+            disk_name      = str(disk_name)
+            disk_type      = str(disk_type)
+
+            print(f"---> Recibido de '{nodo}': {total_gb} GB capacidad | {used_gb} GB usado | {free_gb} GB libre | RAM {ram_gb} GB")
+
+            payload = {
+                "identifier":     nodo,
+                "display_name":   display_name,
+                "total_gb":       total_gb,
+                "used_gb":        used_gb,
+                "free_gb":        free_gb,
+                "iops":           iops,
+                "disk_name":      disk_name,
+                "disk_type":      disk_type,
+                "ram_gb":         ram_gb,
+                "uptime_seconds": uptime_seconds,
+                "ip_origen":      str(data.get("ip_origen",  "")),
+                "mac_origen":     str(data.get("mac_origen", "")),
+                "estado":         str(data.get("estado", "Activo")),
+            }
+
+            # ── 1. GUARDAR EN MEMORIA (prioridad, siempre funciona) ───────────
+            active_nodes[nodo] = {**payload, "ts": datetime.utcnow()}
             _register_client(nodo, writer)
+            print(f"[DEBUG] Nodo '{nodo}' procesado correctamente.")
+            logger.info("[DEBUG] Nodo '%s' procesado correctamente.", nodo)
 
-            logger.info(
-                "Métricas recibidas | identifier='%s' | ip=%s | free_gb=%.2f | ram_gb=%.2f",
-                nodo,
-                payload.get("ip_origen", "?"),
-                payload.get("free_gb", 0.0),
-                payload.get("ram_gb", 0.0),
-            )
-
-            # ── Callback hacia servicios (consolidator / db) ─────────────────
+            # ── 2. ENVIAR A RAILWAY (si falla, el nodo sigue en memoria) ─────
             if _on_metrics_received:
                 try:
                     await _on_metrics_received(nodo, payload)
+                    logger.info("✅ Datos de '%s' enviados a DB.", nodo)
                 except Exception as exc:  # noqa: BLE001
-                    logger.error("Error en callback on_metrics_received: %s", exc)
+                    logger.error(
+                        "❌ Error al enviar datos de '%s' a DB: %s — nodo permanece en memoria.",
+                        nodo, exc,
+                    )
 
-            # ── ACK al nodo ──────────────────────────────────────────────────
-            ack = json.dumps({
-                "status": "OK",
-                "nodo": nodo,
-                "ts": datetime.utcnow().isoformat(),
-            })
-            writer.write((ack + "\n").encode("utf-8"))
-            await writer.drain()
+            if not chunk:
+                break  # EOF alcanzado, no esperar más datos
 
     except ConnectionResetError:
         logger.warning("Conexión reiniciada por el nodo '%s'.", nodo)

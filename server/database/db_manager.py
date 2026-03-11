@@ -40,22 +40,22 @@ class DBManager:
     # ── Inicialización ─────────────────────────────────────────────────────────
 
     def _connect_with_retry(self) -> None:
-        """Intenta crear el pool de conexiones con reintentos."""
+        """Intenta crear el pool de conexiones con reintentos.
+
+        Usa DB_CONFIG para incluir el puerto (46975) y SSL (ssl_disabled=False)
+        requeridos por Railway.
+        """
         for attempt in range(1, cfg.CONNECTION_RETRIES + 1):
             try:
                 self._pool = pooling.MySQLConnectionPool(
                     pool_name=cfg.POOL_NAME,
                     pool_size=cfg.POOL_SIZE,
-                    host=cfg.DB_HOST,
-                    port=cfg.DB_PORT,
-                    user=cfg.DB_USER,
-                    password=cfg.DB_PASSWORD,
-                    database=cfg.DB_NAME,
+                    **cfg.DB_CONFIG,         # host, port, user, password, database, ssl_disabled
                     autocommit=True,
                 )
                 logger.info(
-                    "Pool MySQL creado correctamente (host=%s, db=%s).",
-                    cfg.DB_HOST, cfg.DB_NAME,
+                    "Pool MySQL creado correctamente (host=%s, port=%d, db=%s, ssl=habilitado).",
+                    cfg.DB_HOST, cfg.DB_PORT, cfg.DB_NAME,
                 )
                 return
             except Error as exc:
