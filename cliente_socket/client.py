@@ -36,7 +36,9 @@ import sys
 import time
 
 # Importar módulos del proyecto
-from network import crear_socket, conectar, cerrar_conexion, enviar_info_sistema
+from network import (crear_socket, conectar, cerrar_conexion,
+                     enviar_info_sistema, reenviar_log_pendiente,
+                     guardar_log_pendiente)
 from receiver import recibir_mensajes
 from sender import enviar_mensajes
 
@@ -113,7 +115,10 @@ def iniciar_cliente():
         cerrar_conexion(cliente_socket)
         sys.exit(1)
 
-    # ── Paso 3.5: Enviar info del sistema al servidor (JSON) ──
+    # ── Paso 3.5: Reenviar log pendiente (si existe de sesión anterior) ──
+    reenviar_log_pendiente(cliente_socket)
+
+    # ── Paso 3.6: Enviar info del sistema al servidor (JSON) ──
     # Se envía automáticamente: disco, RAM, timestamp, nodo
     enviar_info_sistema(cliente_socket, nodo, display_name)
 
@@ -156,8 +161,12 @@ def iniciar_cliente():
         print("\n[INFO] Interrupción detectada (Ctrl+C). Cerrando...")
         evento_activo.clear()
 
-    # ── Paso 8: Cerrar conexión de forma segura ──
-    # Pequeña espera para que los threads terminen limpiamente
+    # ── Paso 8: Guardar log si el servidor se desconectó ──
+    # Si la desconexión NO fue por /salir del usuario, guardar datos
+    # para reenviar en la próxima conexión
+    guardar_log_pendiente(nodo, display_name)
+
+    # ── Paso 9: Cerrar conexión de forma segura ──
     time.sleep(0.5)
     cerrar_conexion(cliente_socket)
 

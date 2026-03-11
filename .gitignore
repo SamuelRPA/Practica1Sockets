@@ -30,3 +30,6 @@ build/
 # Byte-compiled / cache
 *.pyc
 *.pyo
+
+# Log pendiente del cliente
+pending_log.json
