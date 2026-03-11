@@ -5,7 +5,7 @@ Este módulo contiene las funciones necesarias para:
 - Crear un socket TCP
 - Conectar al servidor
 - Cerrar la conexión de forma segura
-- Obtener y enviar las particiones del disco
+- Obtener info del sistema (disco, RAM) y enviarla en formato JSON
 
 Utiliza únicamente librerías estándar de Python.
 """
@@ -14,6 +14,10 @@ import socket
 import shutil
 import os
 import string
+import json
+import time
+import ctypes
+import subprocess
 
 
 def crear_socket():
@@ -72,91 +76,204 @@ def cerrar_conexion(cliente_socket):
         print(f"[!] Error al cerrar la conexión: {e}")
 
 
+# ═══════════════════════════════════════════════════════
+#  FUNCIONES DE INFORMACIÓN DEL SISTEMA
+# ═══════════════════════════════════════════════════════
+
+
+def obtener_tipo_disco(letra_unidad):
+    """
+    Intenta detectar si una unidad es SSD o HDD usando PowerShell.
+
+    Args:
+        letra_unidad (str): Letra de la unidad sin ':' (ej: 'C')
+
+    Returns:
+        str: 'SSD', 'HDD' o 'Desconocido'
+    """
+    try:
+        # Comando PowerShell para obtener el tipo de medio del disco físico
+        cmd = (
+            f"(Get-PhysicalDisk | Where-Object {{$_.DeviceID -eq "
+            f"(Get-Partition -DriveLetter '{letra_unidad}' | "
+            f"Get-Disk).Number}}).MediaType"
+        )
+        resultado = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", cmd],
+            capture_output=True, text=True, timeout=10
+        )
+        tipo = resultado.stdout.strip()
+        if "SSD" in tipo or "Solid" in tipo:
+            return "SSD"
+        elif "HDD" in tipo or "Hard" in tipo:
+            return "HDD"
+        return "Desconocido"
+    except Exception:
+        return "Desconocido"
+
+
 def obtener_particiones():
     """
     Obtiene información de todas las particiones/unidades del disco.
 
-    Recorre las letras A-Z buscando unidades disponibles en el sistema.
-    Para cada unidad encontrada, obtiene:
-    - Espacio total
-    - Espacio usado
-    - Espacio libre
-
     Returns:
         list: Lista de diccionarios con info de cada partición.
-              Cada diccionario tiene: 'unidad', 'total_gb', 'usado_gb', 'libre_gb'
     """
     particiones = []
 
-    # Recorrer todas las letras posibles de unidades (A-Z)
     for letra in string.ascii_uppercase:
         ruta = f"{letra}:\\"
 
-        # Verificar si la unidad existe y es accesible
         if os.path.exists(ruta):
             try:
-                # shutil.disk_usage() retorna (total, used, free) en bytes
                 uso = shutil.disk_usage(ruta)
+                tipo = obtener_tipo_disco(letra)
                 particiones.append({
-                    "unidad": f"{letra}:",
+                    "nombre": f"{letra}:",
+                    "tipo": tipo,
                     "total_gb": round(uso.total / (1024 ** 3), 2),
-                    "usado_gb": round(uso.used / (1024 ** 3), 2),
-                    "libre_gb": round(uso.free / (1024 ** 3), 2),
+                    "used_gb": round(uso.used / (1024 ** 3), 2),
+                    "free_gb": round(uso.free / (1024 ** 3), 2),
+                    "iops": 0,  # No medible fácilmente con librería estándar
                 })
             except (PermissionError, OSError):
-                # Unidad existe pero no se puede acceder (ej: CD-ROM vacío)
                 particiones.append({
-                    "unidad": f"{letra}:",
+                    "nombre": f"{letra}:",
+                    "tipo": "Desconocido",
                     "total_gb": 0,
-                    "usado_gb": 0,
-                    "libre_gb": 0,
+                    "used_gb": 0,
+                    "free_gb": 0,
+                    "iops": 0,
                 })
 
     return particiones
 
 
-def enviar_particiones(cliente_socket):
+def obtener_info_ram():
     """
-    Obtiene las particiones del disco y las envía al servidor.
+    Obtiene información de la memoria RAM y uptime del sistema.
 
-    Se llama automáticamente al conectarse al servidor.
-    El mensaje se envía con un formato claro para que el servidor
-    pueda interpretarlo.
+    Usa ctypes para llamar a las APIs de Windows:
+    - GlobalMemoryStatusEx: para obtener total/disponible de RAM
+    - GetTickCount64: para obtener el tiempo de actividad del sistema
+
+    Returns:
+        dict: Diccionario con total_gb, used_gb, free_gb, uptime_seconds
+    """
+    try:
+        # Estructura de Windows para información de memoria
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        stat = MEMORYSTATUSEX()
+        stat.dwLength = ctypes.sizeof(stat)
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+
+        total_gb = round(stat.ullTotalPhys / (1024 ** 3), 2)
+        free_gb = round(stat.ullAvailPhys / (1024 ** 3), 2)
+        used_gb = round(total_gb - free_gb, 2)
+
+        # Uptime del sistema en segundos (GetTickCount64 retorna milisegundos)
+        uptime_ms = ctypes.windll.kernel32.GetTickCount64()
+        uptime_seconds = uptime_ms // 1000
+
+        return {
+            "total_gb": total_gb,
+            "used_gb": used_gb,
+            "free_gb": free_gb,
+            "uptime_seconds": uptime_seconds,
+        }
+
+    except Exception:
+        return {
+            "total_gb": 0,
+            "used_gb": 0,
+            "free_gb": 0,
+            "uptime_seconds": 0,
+        }
+
+
+def enviar_info_sistema(cliente_socket, nodo, display_name):
+    """
+    Construye el payload JSON con info del sistema y lo envía al servidor.
+
+    El formato del payload es el esperado por el Stored Procedure del servidor:
+    {
+        "nodo": "nombre_nodo",
+        "display_name": "Nombre Visible",
+        "timestamp": 1234567890.123,
+        "disco": { nombre, tipo, total_gb, used_gb, free_gb, iops },
+        "ram": { total_gb, used_gb, free_gb, uptime_seconds }
+    }
+
+    Se envía un payload JSON por cada partición detectada.
 
     Args:
-        cliente_socket (socket.socket): El socket conectado al servidor.
+        cliente_socket (socket.socket): Socket conectado al servidor.
+        nodo (str): Identificador del nodo (ej: "cochabamba").
+        display_name (str): Nombre visible del nodo (ej: "Cochabamba Central").
 
     Returns:
         bool: True si se envió correctamente, False si falló.
     """
     try:
         particiones = obtener_particiones()
+        info_ram = obtener_info_ram()
 
-        # Construir mensaje con la información de las particiones
-        lineas = ["[INFO-DISCO] Particiones del cliente:"]
-        lineas.append("-" * 45)
+        print(f"\n[INFO] Detectadas {len(particiones)} partición(es).")
+        print(f"[INFO] RAM: {info_ram['total_gb']} GB total, "
+              f"{info_ram['used_gb']} GB usado, "
+              f"{info_ram['free_gb']} GB libre")
+        print(f"[INFO] Uptime: {info_ram['uptime_seconds']} segundos\n")
 
-        for p in particiones:
-            lineas.append(
-                f"  {p['unidad']}  "
-                f"Total: {p['total_gb']} GB | "
-                f"Usado: {p['usado_gb']} GB | "
-                f"Libre: {p['libre_gb']} GB"
-            )
+        for disco in particiones:
+            # Construir payload JSON con el formato del servidor
+            payload = {
+                "nodo": nodo,
+                "display_name": display_name,
+                "timestamp": time.time(),
+                "disco": {
+                    "nombre": disco["nombre"],
+                    "tipo": disco["tipo"],
+                    "total_gb": disco["total_gb"],
+                    "used_gb": disco["used_gb"],
+                    "free_gb": disco["free_gb"],
+                    "iops": disco["iops"],
+                },
+                "ram": {
+                    "total_gb": info_ram["total_gb"],
+                    "used_gb": info_ram["used_gb"],
+                    "free_gb": info_ram["free_gb"],
+                    "uptime_seconds": info_ram["uptime_seconds"],
+                },
+            }
 
-        lineas.append("-" * 45)
-        mensaje = "\n".join(lineas)
+            # Convertir a JSON y enviar
+            mensaje_json = json.dumps(payload, indent=2)
+            print(f"[Enviando] Disco {disco['nombre']}:")
+            print(mensaje_json)
 
-        # Mostrar en la consola del cliente también
-        print(f"\n{mensaje}\n")
-        print("[INFO] Enviando información de particiones al servidor...")
+            cliente_socket.sendall(mensaje_json.encode("utf-8"))
+            print(f"[✓] Info de {disco['nombre']} enviada al servidor.\n")
 
-        # Enviar al servidor
-        cliente_socket.sendall(mensaje.encode("utf-8"))
-        print("[✓] Particiones enviadas al servidor.\n")
+            # Pequeña pausa entre envíos para no saturar
+            time.sleep(0.2)
+
+        print("[✓] Toda la información del sistema fue enviada.\n")
         return True
 
     except (BrokenPipeError, ConnectionResetError, OSError) as e:
-        print(f"[!] Error al enviar particiones: {e}")
+        print(f"[!] Error al enviar info del sistema: {e}")
         return False
+
 

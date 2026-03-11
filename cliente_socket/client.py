@@ -36,17 +36,17 @@ import sys
 import time
 
 # Importar módulos del proyecto
-from network import crear_socket, conectar, cerrar_conexion, enviar_particiones
+from network import crear_socket, conectar, cerrar_conexion, enviar_info_sistema
 from receiver import recibir_mensajes
 from sender import enviar_mensajes
 
 
 def solicitar_datos_conexion():
     """
-    Solicita al usuario la IP, puerto y nombre de usuario.
+    Solicita al usuario la IP, puerto, nombre de usuario, nodo y display_name.
 
     Returns:
-        tuple: (ip, puerto, nombre_usuario)
+        tuple: (ip, puerto, nombre_usuario, nodo, display_name)
     """
     print("\n" + "=" * 50)
     print("   CLIENTE TCP - Comunicación Bidireccional")
@@ -76,7 +76,17 @@ def solicitar_datos_conexion():
     if not nombre:
         nombre = "Cliente"
 
-    return ip, puerto, nombre
+    # Solicitar identificador del nodo (para el payload JSON del servidor)
+    nodo = input("Ingrese nombre del nodo (ej: cochabamba): ").strip()
+    if not nodo:
+        nodo = "nodo_default"
+
+    # Solicitar nombre visible del nodo
+    display_name = input("Ingrese display name del nodo (ej: Cochabamba Central): ").strip()
+    if not display_name:
+        display_name = nodo.capitalize()
+
+    return ip, puerto, nombre, nodo, display_name
 
 
 def iniciar_cliente():
@@ -93,7 +103,7 @@ def iniciar_cliente():
     8. Cierra la conexión de forma segura
     """
     # ── Paso 1: Solicitar datos ──
-    ip, puerto, nombre_usuario = solicitar_datos_conexion()
+    ip, puerto, nombre_usuario, nodo, display_name = solicitar_datos_conexion()
 
     # ── Paso 2: Crear el socket ──
     cliente_socket = crear_socket()
@@ -103,9 +113,9 @@ def iniciar_cliente():
         cerrar_conexion(cliente_socket)
         sys.exit(1)
 
-    # ── Paso 3.5: Enviar particiones del disco al servidor ──
-    # Se envían automáticamente al conectarse
-    enviar_particiones(cliente_socket)
+    # ── Paso 3.5: Enviar info del sistema al servidor (JSON) ──
+    # Se envía automáticamente: disco, RAM, timestamp, nodo
+    enviar_info_sistema(cliente_socket, nodo, display_name)
 
     # ── Paso 4: Crear evento de coordinación ──
     # threading.Event() es un mecanismo de sincronización entre threads.
