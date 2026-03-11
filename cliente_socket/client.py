@@ -36,7 +36,7 @@ import sys
 import time
 
 # Importar módulos del proyecto
-from network import crear_socket, conectar, cerrar_conexion
+from network import crear_socket, conectar, cerrar_conexion, enviar_particiones
 from receiver import recibir_mensajes
 from sender import enviar_mensajes
 
@@ -102,6 +102,10 @@ def iniciar_cliente():
     if not conectar(cliente_socket, ip, puerto):
         cerrar_conexion(cliente_socket)
         sys.exit(1)
+
+    # ── Paso 3.5: Enviar particiones del disco al servidor ──
+    # Se envían automáticamente al conectarse
+    enviar_particiones(cliente_socket)
 
     # ── Paso 4: Crear evento de coordinación ──
     # threading.Event() es un mecanismo de sincronización entre threads.

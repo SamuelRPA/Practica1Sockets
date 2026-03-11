@@ -5,11 +5,15 @@ Este módulo contiene las funciones necesarias para:
 - Crear un socket TCP
 - Conectar al servidor
 - Cerrar la conexión de forma segura
+- Obtener y enviar las particiones del disco
 
-Utiliza únicamente la librería estándar 'socket' de Python.
+Utiliza únicamente librerías estándar de Python.
 """
 
 import socket
+import shutil
+import os
+import string
 
 
 def crear_socket():
@@ -66,3 +70,93 @@ def cerrar_conexion(cliente_socket):
         print("[INFO] Conexión cerrada correctamente.")
     except OSError as e:
         print(f"[!] Error al cerrar la conexión: {e}")
+
+
+def obtener_particiones():
+    """
+    Obtiene información de todas las particiones/unidades del disco.
+
+    Recorre las letras A-Z buscando unidades disponibles en el sistema.
+    Para cada unidad encontrada, obtiene:
+    - Espacio total
+    - Espacio usado
+    - Espacio libre
+
+    Returns:
+        list: Lista de diccionarios con info de cada partición.
+              Cada diccionario tiene: 'unidad', 'total_gb', 'usado_gb', 'libre_gb'
+    """
+    particiones = []
+
+    # Recorrer todas las letras posibles de unidades (A-Z)
+    for letra in string.ascii_uppercase:
+        ruta = f"{letra}:\\"
+
+        # Verificar si la unidad existe y es accesible
+        if os.path.exists(ruta):
+            try:
+                # shutil.disk_usage() retorna (total, used, free) en bytes
+                uso = shutil.disk_usage(ruta)
+                particiones.append({
+                    "unidad": f"{letra}:",
+                    "total_gb": round(uso.total / (1024 ** 3), 2),
+                    "usado_gb": round(uso.used / (1024 ** 3), 2),
+                    "libre_gb": round(uso.free / (1024 ** 3), 2),
+                })
+            except (PermissionError, OSError):
+                # Unidad existe pero no se puede acceder (ej: CD-ROM vacío)
+                particiones.append({
+                    "unidad": f"{letra}:",
+                    "total_gb": 0,
+                    "usado_gb": 0,
+                    "libre_gb": 0,
+                })
+
+    return particiones
+
+
+def enviar_particiones(cliente_socket):
+    """
+    Obtiene las particiones del disco y las envía al servidor.
+
+    Se llama automáticamente al conectarse al servidor.
+    El mensaje se envía con un formato claro para que el servidor
+    pueda interpretarlo.
+
+    Args:
+        cliente_socket (socket.socket): El socket conectado al servidor.
+
+    Returns:
+        bool: True si se envió correctamente, False si falló.
+    """
+    try:
+        particiones = obtener_particiones()
+
+        # Construir mensaje con la información de las particiones
+        lineas = ["[INFO-DISCO] Particiones del cliente:"]
+        lineas.append("-" * 45)
+
+        for p in particiones:
+            lineas.append(
+                f"  {p['unidad']}  "
+                f"Total: {p['total_gb']} GB | "
+                f"Usado: {p['usado_gb']} GB | "
+                f"Libre: {p['libre_gb']} GB"
+            )
+
+        lineas.append("-" * 45)
+        mensaje = "\n".join(lineas)
+
+        # Mostrar en la consola del cliente también
+        print(f"\n{mensaje}\n")
+        print("[INFO] Enviando información de particiones al servidor...")
+
+        # Enviar al servidor
+        cliente_socket.sendall(mensaje.encode("utf-8"))
+        print("[✓] Particiones enviadas al servidor.\n")
+        return True
+
+    except (BrokenPipeError, ConnectionResetError, OSError) as e:
+        print(f"[!] Error al enviar particiones: {e}")
+        return False
+
