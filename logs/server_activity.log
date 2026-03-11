@@ -173,3 +173,320 @@
 [2026-03-08 00:34:16] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
 [2026-03-08 00:34:16] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
 [2026-03-08 00:35:16] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 09:47:53] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T13:48:01.933578
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 09:48:01] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 09:49:45] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:61687.
+[2026-03-11 09:49:55] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 09:49:55] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 09:50:57] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 09:50:57] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 09:52:33] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 09:52:33] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 09:54:41] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 09:54:46] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T13:54:54.872191
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 09:54:54] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 09:55:00] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:62173.
+[2026-03-11 09:56:46] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 09:56:46] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 09:57:55] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 09:58:01] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T13:58:11.232723
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 09:58:11] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 09:58:17] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:50933.
+[2026-03-11 09:58:46] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 09:58:46] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:02:22] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 10:04:59] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T14:05:08.601749
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 10:05:08] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 10:05:15] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:55897.
+[2026-03-11 10:05:28] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 10:05:28] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:05:53] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 10:05:53] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:05:54] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=0) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 10:05:54] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:06:36] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 10:09:58] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T14:10:07.035139
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 10:10:07] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 10:10:12] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:49866.
+[2026-03-11 10:10:12] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:10:12] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 49866).
+[2026-03-11 10:10:12] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:10:12] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:10:13] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:10:14] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:10:14] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:10:47] [[33mWARNING[0m] [CNS.FailureMonitor] ALERTA: Nodo 'cochabamba' SIN REPORTE desde hace 34.5 segundos — marcando como 'No Reporta'.
+[2026-03-11 10:10:47] [[31mERROR[0m] [CNS.DBManager] Error en update_node_status (identifier=cochabamba): 1146 (42S02): Table 'railway.Nodes' doesn't exist
+[2026-03-11 10:10:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (41.0s de inactividad).
+[2026-03-11 10:10:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (46.0s de inactividad).
+[2026-03-11 10:11:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (51.0s de inactividad).
+[2026-03-11 10:11:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (56.0s de inactividad).
+[2026-03-11 10:11:13] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (61.0s de inactividad).
+[2026-03-11 10:11:18] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (66.0s de inactividad).
+[2026-03-11 10:11:23] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (71.0s de inactividad).
+[2026-03-11 10:11:25] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=0 (excluidos=1) | capacity=0.00 | free=0.00 | used=0.00
+[2026-03-11 10:11:25] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:11:28] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (76.0s de inactividad).
+[2026-03-11 10:11:33] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (81.0s de inactividad).
+[2026-03-11 10:11:38] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (86.0s de inactividad).
+[2026-03-11 10:11:43] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (91.1s de inactividad).
+[2026-03-11 10:11:48] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (96.1s de inactividad).
+[2026-03-11 10:11:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (101.1s de inactividad).
+[2026-03-11 10:11:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (106.1s de inactividad).
+[2026-03-11 10:12:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (111.1s de inactividad).
+[2026-03-11 10:12:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (116.1s de inactividad).
+[2026-03-11 10:12:43] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (150.7s de inactividad).
+[2026-03-11 10:12:48] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (155.7s de inactividad).
+[2026-03-11 10:12:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (160.7s de inactividad).
+[2026-03-11 10:12:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (165.7s de inactividad).
+[2026-03-11 10:13:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (170.7s de inactividad).
+[2026-03-11 10:13:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (175.7s de inactividad).
+[2026-03-11 10:13:13] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (180.7s de inactividad).
+[2026-03-11 10:13:18] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (185.7s de inactividad).
+[2026-03-11 10:13:23] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (190.7s de inactividad).
+[2026-03-11 10:13:28] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (195.7s de inactividad).
+[2026-03-11 10:13:33] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (200.7s de inactividad).
+[2026-03-11 10:13:38] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (205.7s de inactividad).
+[2026-03-11 10:13:43] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (210.7s de inactividad).
+[2026-03-11 10:13:48] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (215.7s de inactividad).
+[2026-03-11 10:13:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (220.8s de inactividad).
+[2026-03-11 10:13:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (225.8s de inactividad).
+[2026-03-11 10:14:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (230.8s de inactividad).
+[2026-03-11 10:14:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (235.8s de inactividad).
+[2026-03-11 10:14:13] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (240.8s de inactividad).
+[2026-03-11 10:14:18] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (245.8s de inactividad).
+[2026-03-11 10:14:23] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (250.8s de inactividad).
+[2026-03-11 10:14:28] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (255.8s de inactividad).
+[2026-03-11 10:14:33] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (260.8s de inactividad).
+[2026-03-11 10:14:38] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (265.8s de inactividad).
+[2026-03-11 10:14:43] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (270.8s de inactividad).
+[2026-03-11 10:14:48] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (275.8s de inactividad).
+[2026-03-11 10:14:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (280.8s de inactividad).
+[2026-03-11 10:14:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (285.8s de inactividad).
+[2026-03-11 10:15:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (290.9s de inactividad).
+[2026-03-11 10:15:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (295.9s de inactividad).
+[2026-03-11 10:15:13] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (300.9s de inactividad).
+[2026-03-11 10:15:18] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (305.9s de inactividad).
+[2026-03-11 10:15:23] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (310.9s de inactividad).
+[2026-03-11 10:15:28] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (315.9s de inactividad).
+[2026-03-11 10:15:33] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (320.9s de inactividad).
+[2026-03-11 10:15:38] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (325.9s de inactividad).
+[2026-03-11 10:15:43] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (330.9s de inactividad).
+[2026-03-11 10:15:48] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (335.9s de inactividad).
+[2026-03-11 10:15:53] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (340.9s de inactividad).
+[2026-03-11 10:15:58] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (345.9s de inactividad).
+[2026-03-11 10:16:03] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (350.9s de inactividad).
+[2026-03-11 10:16:08] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (356.0s de inactividad).
+[2026-03-11 10:16:10] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 10:16:10] [[32mINFO[0m] [CNS.Main] Servidor CNS detenido. Hasta luego.
+[2026-03-11 10:16:16] [[32mINFO[0m] [CNS] Sistema de logging inicializado. Archivo: C:\Users\danie\Documents\Sistemas Distribuidos\Práctica1\CNS_Server_\logs\server_activity.log
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.DBManager] Pool MySQL creado correctamente (host=hopper.proxy.rlwy.net, port=46975, db=railway, ssl=habilitado).
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main]   CNS Server — Central Node Server arrancando...
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main]   Hora UTC: 2026-03-11T14:16:26.656197
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main] ════════════════════════════════════════════════════════════
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main] Dependencias inyectadas correctamente.
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.Main] Consola de comandos iniciada (hilo separado).
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.FailureMonitor] Monitor de fallos iniciado (intervalo=5.0s, timeout=30.0s).
+[2026-03-11 10:16:26] [[32mINFO[0m] [CNS.SocketServer] Servidor CNS escuchando en ('0.0.0.0', 5000) (puerto 5000).
+[2026-03-11 10:16:32] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:50659.
+[2026-03-11 10:16:32] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:16:32] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 50659).
+[2026-03-11 10:16:32] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:16:32] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:16:33] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:16:34] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:16:34] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:17:06] [[33mWARNING[0m] [CNS.FailureMonitor] ALERTA: Nodo 'cochabamba' SIN REPORTE desde hace 34.6 segundos — marcando como 'No Reporta'.
+[2026-03-11 10:17:07] [[31mERROR[0m] [CNS.DBManager] Error en update_node_status (identifier=cochabamba): 1146 (42S02): Table 'railway.Nodes' doesn't exist
+[2026-03-11 10:17:13] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (41.5s de inactividad).
+[2026-03-11 10:17:18] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (46.5s de inactividad).
+[2026-03-11 10:17:21] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:64878.
+[2026-03-11 10:17:21] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:17:21] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 64878).
+[2026-03-11 10:17:21] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:17:21] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:17:22] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:17:23] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:17:23] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:17:23] [[32mINFO[0m] [CNS.FailureMonitor] Nodo 'cochabamba' recuperado tras 2.4s de inactividad — estado restaurado.
+[2026-03-11 10:17:31] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:49852.
+[2026-03-11 10:17:31] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:17:31] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 49852).
+[2026-03-11 10:17:31] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:17:31] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:17:32] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:17:33] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:17:33] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:17:34] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=1 (excluidos=0) | capacity=1024.00 | free=824.00 | used=200.00
+[2026-03-11 10:17:34] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:17:39] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=1 (excluidos=0) | capacity=1024.00 | free=824.00 | used=200.00
+[2026-03-11 10:17:39] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:17:41] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:49853.
+[2026-03-11 10:17:41] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:17:41] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 49853).
+[2026-03-11 10:17:41] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:17:41] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:17:42] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:17:43] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:17:43] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:17:51] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:49854.
+[2026-03-11 10:17:51] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:17:51] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 49854).
+[2026-03-11 10:17:51] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:17:51] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:17:52] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:17:53] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:17:53] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:18:01] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:62298.
+[2026-03-11 10:18:01] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:18:01] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 62298).
+[2026-03-11 10:18:01] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:18:01] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:18:02] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:18:03] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:18:03] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:18:11] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:62299.
+[2026-03-11 10:18:11] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:18:11] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 62299).
+[2026-03-11 10:18:11] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:18:11] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:18:12] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:18:13] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:18:13] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:18:21] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:59444.
+[2026-03-11 10:18:21] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:18:21] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 59444).
+[2026-03-11 10:18:21] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:18:21] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:19:38] [[33mWARNING[0m] [CNS.FailureMonitor] ALERTA: Nodo 'cochabamba' SIN REPORTE desde hace 77.1 segundos — marcando como 'No Reporta'.
+[2026-03-11 10:19:39] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:19:39] [[31mERROR[0m] [CNS.DBManager] Error en update_node_status (identifier=cochabamba): 1146 (42S02): Table 'railway.Nodes' doesn't exist
+[2026-03-11 10:19:40] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:19:40] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:19:45] [DEBUG   ] [CNS.FailureMonitor] Nodo 'cochabamba' continúa sin reportar (84.0s de inactividad).
+[2026-03-11 10:19:45] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:54293.
+[2026-03-11 10:19:45] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:19:45] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 54293).
+[2026-03-11 10:19:45] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:19:45] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:19:47] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:19:48] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:19:48] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:19:50] [[32mINFO[0m] [CNS.FailureMonitor] Nodo 'cochabamba' recuperado tras 4.3s de inactividad — estado restaurado.
+[2026-03-11 10:19:55] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:52621.
+[2026-03-11 10:19:55] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:19:55] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 52621).
+[2026-03-11 10:19:55] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:19:55] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:19:56] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:19:57] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:19:57] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:05] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:62844.
+[2026-03-11 10:20:05] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:05] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 62844).
+[2026-03-11 10:20:05] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:05] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:06] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:07] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:07] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:15] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:65437.
+[2026-03-11 10:20:15] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:15] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 65437).
+[2026-03-11 10:20:15] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:15] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:16] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:17] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:17] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:25] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:56826.
+[2026-03-11 10:20:25] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:25] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 56826).
+[2026-03-11 10:20:25] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:25] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:26] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:27] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:27] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:35] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:56827.
+[2026-03-11 10:20:35] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:35] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 56827).
+[2026-03-11 10:20:35] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:35] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:36] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:37] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:37] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:45] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:65399.
+[2026-03-11 10:20:45] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:45] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 65399).
+[2026-03-11 10:20:45] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:45] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:46] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:47] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:47] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:20:55] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:55881.
+[2026-03-11 10:20:55] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:20:55] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 55881).
+[2026-03-11 10:20:55] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:20:55] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:20:56] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:20:57] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:20:57] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:21:03] [DEBUG   ] [CNS.MetricsConsolidator] Totales cluster | nodos=1 (excluidos=0) | capacity=1024.00 | free=824.00 | used=200.00
+[2026-03-11 10:21:03] [[32mINFO[0m] [CNS.Main] Consola: STATUS consultado.
+[2026-03-11 10:21:05] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:51727.
+[2026-03-11 10:21:05] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:21:05] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 51727).
+[2026-03-11 10:21:05] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:21:05] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:21:06] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:21:07] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:21:07] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:21:15] [[32mINFO[0m] [CNS.SocketServer] Conexión entrante desde 127.0.0.1:60700.
+[2026-03-11 10:21:15] [[32mINFO[0m] [CNS.SocketServer] DEBUG: Datos recibidos del cliente: llaves_raíz=['nodo', 'display_name', 'disco', 'ram'] | disco=['nombre', 'tipo', 'total_gb', 'used_gb', 'free_gb', 'iops']
+[2026-03-11 10:21:15] [[32mINFO[0m] [CNS.SocketServer] Nuevo nodo conectado: 'cochabamba' desde ('127.0.0.1', 60700).
+[2026-03-11 10:21:15] [[32mINFO[0m] [CNS.SocketServer] [DEBUG] Nodo 'cochabamba' procesado correctamente.
+[2026-03-11 10:21:15] [DEBUG   ] [CNS.MetricsConsolidator] Consolidado | identifier='cochabamba' | used_gb=200.00 | free_gb=824.00 | ram_gb=16.00
+[2026-03-11 10:21:16] [[31mERROR[0m] [CNS.DBManager] Error en save_metrics (identifier=cochabamba): 1305 (42000): PROCEDURE railway.sp_InsertMetricAndUpdateNode does not exist
+[2026-03-11 10:21:17] [[32mINFO[0m] [CNS.SocketServer] ✅ Datos de 'cochabamba' enviados a DB.
+[2026-03-11 10:21:17] [[33mWARNING[0m] [CNS.SocketServer] Nodo desconectado: 'cochabamba'.
+[2026-03-11 10:21:23] [[32mINFO[0m] [CNS.Main] Iniciando apagado controlado del servidor...
+[2026-03-11 10:21:23] [[32mINFO[0m] [CNS.Main] Servidor CNS detenido. Hasta luego.

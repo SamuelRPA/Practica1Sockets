@@ -1,6 +1,6 @@
 # README de Integración — CNS Server (Central Monitoring Server)
 
-> **Versión:** 3.0 | **Puerto:** `5000` | **Protocolo:** TCP + JSON (UTF-8, newline-delimited `\n`)
+> **Versión:** 4.0 | **Puerto:** `5000` | **Protocolo:** TCP + JSON (UTF-8, newline-delimited `\n`)
 
 ---
 
@@ -22,12 +22,12 @@ El campo `nodo` del JSON se usa directamente como `identifier` en la tabla `Node
 - ✅ Sin espacios ni caracteres especiales
 - ✅ Estable (no cambiar una vez registrado; es la clave en la tabla)
 
-| ✅ Correcto      | ❌ Incorrecto          |
+| ✅ Correcto       | ❌ Incorrecto          |
 |-----------------|----------------------|
+| `"cochabamba"`  | `"Cochabamba"`       |
 | `"oruro"`       | `"Oruro"`            |
 | `"lapaz"`       | `"La Paz"`           |
 | `"santacruz"`   | `"Santa Cruz"`       |
-| `"cochabamba"`  | `"Cochabamba_Node"`  |
 
 ---
 
@@ -35,25 +35,28 @@ El campo `nodo` del JSON se usa directamente como `identifier` en la tabla `Node
 
 Envía **un JSON por línea** (`\n` como terminador), codificado en **UTF-8**:
 
+> ⚠️ **Cambio v4.0:** Los campos de disco y RAM usan ahora claves en **inglés** (`used_gb`, `free_gb`).  
+> Los alias en español (`usado_gb`, `libre_gb`) siguen aceptándose como fallback, pero se recomienda migrar.
+
 ```json
 {
-  "nodo":           "oruro",
+  "nodo":           "cochabamba",
   "ip_origen":      "192.168.1.10",
   "mac_origen":     "AA:BB:CC:DD:EE:FF",
-  "display_name":   "Oruro Regional",
+  "display_name":   "Cochabamba Central",
   "uptime_seconds": 86400,
   "disco": {
     "nombre":   "/dev/sda",
     "tipo":     "SSD",
     "total_gb": 500.0,
-    "usado_gb": 320.5,
-    "libre_gb": 179.5,
+    "used_gb":  320.5,
+    "free_gb":  179.5,
     "iops":     4200
   },
   "ram": {
     "total_gb":      16.0,
-    "usado_gb":      10.2,
-    "libre_gb":       5.8,
+    "used_gb":       10.2,
+    "free_gb":        5.8,
     "porcentaje_uso": 63.75
   },
   "estado": "Activo"
@@ -70,12 +73,12 @@ Envía **un JSON por línea** (`\n` como terminador), codificado en **UTF-8**:
 | `disco.nombre`        | `string` | ✅   | Dispositivo (ej: `/dev/sda`, `C:`)                         |
 | `disco.tipo`          | `string` | ✅   | `HDD` \| `SSD` \| `NVMe`                                   |
 | `disco.total_gb`      | `float`  | ✅   | Capacidad total en GB                                      |
-| `disco.usado_gb`      | `float`  | ✅   | Espacio usado en GB                                        |
-| `disco.libre_gb`      | `float`  | ✅   | Espacio libre en GB                                        |
+| `disco.used_gb`       | `float`  | ✅   | Espacio usado en GB (**preferido**; alias: `usado_gb`)     |
+| `disco.free_gb`       | `float`  | ✅   | Espacio libre en GB (**preferido**; alias: `libre_gb`)     |
 | `disco.iops`          | `int`    | ✅   | Operaciones de E/S por segundo                             |
 | `ram.total_gb`        | `float`  | ✅   | RAM total en GB                                            |
-| `ram.usado_gb`        | `float`  | ⬜   | RAM usada en GB                                            |
-| `ram.libre_gb`        | `float`  | ⬜   | RAM libre en GB                                            |
+| `ram.used_gb`         | `float`  | ⬜   | RAM usada en GB (**preferido**; alias: `usado_gb`)         |
+| `ram.free_gb`         | `float`  | ⬜   | RAM libre en GB (**preferido**; alias: `libre_gb`)         |
 | `ram.porcentaje_uso`  | `float`  | ⬜   | Porcentaje de uso RAM (0.0–100.0)                          |
 | `estado`              | `string` | ⬜   | Opcional. Defecto: `"Activo"`                              |
 
@@ -127,16 +130,16 @@ with socket.create_connection((HOST, PORT)) as s:
     threading.Thread(target=listen, args=(s,), daemon=True).start()
     while True:
         payload = json.dumps({
-            "nodo": "oruro",              # ← minúsculas, sin espacios
+            "nodo": "cochabamba",          # ← minúsculas, sin espacios
             "ip_origen": "192.168.1.10",
             "mac_origen": "AA:BB:CC:DD:EE:FF",
-            "display_name": "Oruro Regional",
+            "display_name": "Cochabamba Central",
             "uptime_seconds": 86400,
             "disco": {"nombre": "/dev/sda", "tipo": "SSD",
-                      "total_gb": 500.0, "usado_gb": 320.5,
-                      "libre_gb": 179.5, "iops": 4200},
-            "ram": {"total_gb": 16.0, "usado_gb": 10.2,
-                    "libre_gb": 5.8, "porcentaje_uso": 63.75},
+                      "total_gb": 500.0, "used_gb": 320.5,   # ← inglés
+                      "free_gb": 179.5, "iops": 4200},
+            "ram": {"total_gb": 16.0, "used_gb": 10.2,       # ← inglés
+                    "free_gb": 5.8, "porcentaje_uso": 63.75},
             "estado": "Activo"
         }) + "\n"
         s.sendall(payload.encode("utf-8"))
@@ -147,15 +150,18 @@ with socket.create_connection((HOST, PORT)) as s:
 
 ## 2. Para el Equipo de Base de Datos (MySQL)
 
-### Credenciales (completar en `server/database/db_config.py`)
+### Credenciales Railway (editar en `server/database/db_config.py`)
 
 ```python
-DB_HOST     = "localhost"        # ← su host MySQL
-DB_PORT     = 3306
-DB_USER     = "cns_user"         # ← su usuario
-DB_PASSWORD = "changeme"         # ← su contraseña
-DB_NAME     = "storage_cluster"  # ← nombre de la base de datos
+DB_HOST     = "hopper.proxy.rlwy.net"
+DB_PORT     = 46975
+DB_USER     = "root"
+DB_PASSWORD = ""          # ← EDITE AQUÍ: ingrese la contraseña
+DB_NAME     = "railway"
+SSL_MODE    = "REQUIRED"  # SSL habilitado para Railway
 ```
+
+> 🔒 La conexión incluye `ssl_disabled=False` automáticamente al usar el `DB_CONFIG` dict.
 
 ### Tablas esperadas — base de datos `storage_cluster`
 
@@ -334,26 +340,28 @@ python main.py
 ## 5. Diagrama de Flujo
 
 ```
-[Nodo Regional] ──JSON anidado──> socket_server.py
-  {"nodo": "oruro", "disco": {...}, "ram": {...}}
-                                        │
-                              _validate_and_extract()
-                              (normaliza nodo → identifier)
-                                        │
-                       ┌────────────────┴──────────────────┐
-                       ▼                                    ▼
-           metrics_consolidator              db_manager.save_metrics()
-           (Σ en memoria RAM)               CALL sp_InsertMetricAndUpdateNode(
-               │                               identifier, display_name,
-               │                               total_gb, used_gb, free_gb,
-               │                               iops, disk_name, disk_type,
-               │                               ram_gb, uptime_seconds)
-               │                                    │
-               │                             INSERT INTO Metrics
-               │                             INSERT/UPDATE Nodes (status='Activo')
+[Nodo Regional] ──JSON (used_gb/free_gb)──> socket_server.py
+  {"nodo": "cochabamba", "disco": {"used_gb": ..., "free_gb": ...}, ...}
+                                              │
+                                _validate_and_extract()
+                                (identifier = nodo.lower())
+                                              │
+                        ① PRIORIDAD RAM — guarda en active_nodes (siempre)
+                                              │
+                       ┌──────────────────────┴────────────────────────┐
+                       ▼                                               ▼
+           metrics_consolidator                        db_manager.save_metrics()
+           (Σ de active_nodes → STATUS)               CALL sp_InsertMetricAndUpdateNode(
+               │   (funciona sin DB)                     identifier, display_name,
+               │                                         total_gb, used_gb, free_gb,
+               │                                         iops, disk_name, disk_type,
+               │                                         ram_gb, uptime_seconds)
+               │                                              │
+               │                                       INSERT INTO Metrics
+               │                                       INSERT/UPDATE Nodes
                │
            failure_monitor (cada 5s)
            → si nodo inactivo > 30s:
              UPDATE Nodes SET status = 'No Reporta'
-             WHERE identifier = 'oruro'
+             WHERE identifier = 'cochabamba'
 ```

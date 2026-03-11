@@ -2,16 +2,14 @@
 server/services/metrics_consolidator.py
 Lógica de consolidación de métricas del cluster.
 
-Ahora trabaja con el payload aplanado proveniente de socket_server._validate_and_extract().
+Trabaja con el payload aplanado proveniente de socket_server._validate_and_extract().
 Campos en uso:
   identifier, display_name, total_gb, used_gb, free_gb, iops,
   disk_name, disk_type, ram_gb, uptime_seconds
-  (más alias internos: free_gb_disco, used_gb_disco para los totales en memoria)
 
-Calcula:
-  Capacity_Total = Σ total_gb
-  Free_Total     = Σ free_gb
-  Used_Total     = Σ used_gb_disco
+Los totales para el comando STATUS se calculan EN TIEMPO REAL sumando los
+valores de socket_server.active_nodes, garantizando que el comando funcione
+perfectamente incluso si Railway (MySQL) está desconectado.
 """
 
 import asyncio
@@ -19,11 +17,13 @@ from datetime import datetime
 from typing import Any, Optional
 
 from server.utils.logger import get_logger
+import server.network.socket_server as _net   # Importación diferida para evitar círculos
 
 logger = get_logger("MetricsConsolidator")
 
-# ── Estado en memoria ──────────────────────────────────────────────────────────
-# _node_metrics: { nodo -> {payload completo + "ts": datetime} }
+# ── Estado en memoria local del consolidador ──────────────────────────────────
+# _node_metrics se mantiene para retro-compatibilidad con otras partes del código.
+# La fuente de verdad para STATUS es _net.active_nodes.
 _node_metrics: dict[str, dict] = {}
 
 # Callback para persistir en DB (inyectado por main.py)
@@ -41,7 +41,11 @@ def set_db_callback(callback) -> None:
 async def on_metrics_received(nodo: str, payload: dict) -> None:
     """
     Callback registrado en socket_server.
-    Actualiza el estado en memoria y persiste en DB de forma asíncrona.
+    Actualiza el estado local en memoria y persiste en DB de forma asíncrona.
+
+    NOTA: socket_server ya guardó el payload en active_nodes ANTES de llamar
+    a este callback (prioridad RAM). Aquí sólo mantenemos _node_metrics para
+    compatibilidad y lanzamos la persistencia DB.
 
     Args:
         nodo:    Identificador del nodo.
@@ -50,8 +54,9 @@ async def on_metrics_received(nodo: str, payload: dict) -> None:
     _node_metrics[nodo] = {**payload, "ts": datetime.utcnow()}
 
     logger.debug(
-        "Consolidado | identifier='%s' | free_gb=%.2f | ram_gb=%.2f",
+        "Consolidado | identifier='%s' | used_gb=%.2f | free_gb=%.2f | ram_gb=%.2f",
         nodo,
+        payload.get("used_gb", 0.0),
         payload.get("free_gb", 0.0),
         payload.get("ram_gb", 0.0),
     )
@@ -81,7 +86,11 @@ async def on_metrics_received(nodo: str, payload: dict) -> None:
 
 def get_cluster_totals(exclude: set = None) -> dict:
     """
-    Calcula los totales del cluster a partir de los últimos datos en memoria.
+    Calcula los totales del cluster en TIEMPO REAL desde socket_server.active_nodes.
+
+    Al leer de active_nodes (que se llena ANTES que la DB), este método funciona
+    perfectamente aunque Railway esté desconectado.
+
     Los nodos en `exclude` (ej: marcados como 'No Reporta') se omiten del cálculo.
 
     Args:
@@ -91,26 +100,27 @@ def get_cluster_totals(exclude: set = None) -> dict:
         {
           "capacity_total": float,   # Σ total_gb
           "free_total":     float,   # Σ free_gb
-          "used_total":     float,   # Σ used_gb_disco
+          "used_total":     float,   # Σ used_gb
           "node_count":     int,
         }
     """
     excluded = exclude or set()
-    active = {k: v for k, v in _node_metrics.items() if k not in excluded}
+    # Fuente de verdad: active_nodes del SocketServer (RAM-priority)
+    source = {k: v for k, v in _net.active_nodes.items() if k not in excluded}
 
-    capacity_total = sum(v.get("total_gb",     0.0) for v in active.values())
-    free_total     = sum(v.get("free_gb",       0.0) for v in active.values())
-    used_total     = sum(v.get("used_gb_disco", 0.0) for v in active.values())
+    capacity_total = sum(v.get("total_gb", 0.0) for v in source.values())
+    free_total     = sum(v.get("free_gb",  0.0) for v in source.values())
+    used_total     = sum(v.get("used_gb",  0.0) for v in source.values())
 
     logger.debug(
         "Totales cluster | nodos=%d (excluidos=%d) | capacity=%.2f | free=%.2f | used=%.2f",
-        len(active), len(excluded), capacity_total, free_total, used_total,
+        len(source), len(excluded), capacity_total, free_total, used_total,
     )
     return {
         "capacity_total": capacity_total,
         "free_total":     free_total,
         "used_total":     used_total,
-        "node_count":     len(active),
+        "node_count":     len(source),
     }
 
 
