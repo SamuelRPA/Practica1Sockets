@@ -40,6 +40,7 @@ Formato JSON anidado (una línea terminada en \\n):
 
 import asyncio
 import json
+import time
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -200,6 +201,25 @@ async def _handle_client(
                 list(data.keys()),
                 list((data.get("disco") or {}).keys()),
             )
+
+            # ── Validación de timestamp (Modificación 1: Defensa) ───────────
+            ts_value = data.get("timestamp")
+            if ts_value is not None:
+                try:
+                    ts_float = float(ts_value)
+                    time_diff = abs(time.time() - ts_float)
+                    if time_diff > 60:
+                        logger.warning(
+                            "Desfase de tiempo detectado para nodo desde %s:%s — diff=%.1fs > 60s.",
+                            peer[0], peer[1], time_diff,
+                        )
+                        writer.write(b"ERROR: CONFIG_REQUIRED_TIME_MISMATCH\n")
+                        await writer.drain()
+                        if not chunk:
+                            break
+                        continue
+                except (ValueError, TypeError):
+                    logger.debug("Campo 'timestamp' no es numérico, ignorando validación.")
 
             # ── Respuesta inmediata al cliente (antes de procesar DB) ─────────
             writer.write(b"OK\n")

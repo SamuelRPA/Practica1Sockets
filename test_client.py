@@ -36,5 +36,5 @@ def test_final():
 if __name__ == "__main__":
     while True: # Esto mantendrá al cliente enviando datos
         test_final()
-        print("⏳ Esperando 10 segundos para el siguiente envío...")
-        time.sleep(50)
+        print("⏳ Esperando 30 segundos para el siguiente envío...")
+        time.sleep(30)

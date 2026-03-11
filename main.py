@@ -152,6 +152,9 @@ def _wire_dependencies() -> None:
     # ── failure_monitor → socket_server (last_seen) ──────────────────────────
     monitor.set_last_seen_source(lambda: dict(net.last_seen))
 
+    # ── failure_monitor → socket_server (active_nodes para log offline) ──────
+    monitor.set_active_nodes_source(lambda: dict(net.active_nodes))
+
     # ── failure_monitor → db_manager (actualizar estado) ───────────────────
     monitor.set_status_updater(db.update_node_status)
 
