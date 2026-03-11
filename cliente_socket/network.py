@@ -207,16 +207,13 @@ def enviar_info_sistema(cliente_socket, nodo, display_name):
     """
     Construye el payload JSON con info del sistema y lo envía al servidor.
 
-    El formato del payload es el esperado por el Stored Procedure del servidor:
-    {
-        "nodo": "nombre_nodo",
-        "display_name": "Nombre Visible",
-        "timestamp": 1234567890.123,
-        "disco": { nombre, tipo, total_gb, used_gb, free_gb, iops },
-        "ram": { total_gb, used_gb, free_gb, uptime_seconds }
-    }
+    Formato exacto esperado por el Stored Procedure y el Monitor:
+    {"nodo":"...","display_name":"...","timestamp":...,"disco":{...},"ram":{...}}
 
-    Se envía un payload JSON por cada partición detectada.
+    IMPORTANTE:
+    - Se envía UN solo JSON compacto (sin indent)
+    - Se usa el disco principal (C: o el primero disponible)
+    - Se termina con \\n para que el servidor sepa dónde termina el mensaje
 
     Args:
         cliente_socket (socket.socket): Socket conectado al servidor.
@@ -230,50 +227,57 @@ def enviar_info_sistema(cliente_socket, nodo, display_name):
         particiones = obtener_particiones()
         info_ram = obtener_info_ram()
 
-        print(f"\n[INFO] Detectadas {len(particiones)} partición(es).")
+        if not particiones:
+            print("[!] No se detectaron particiones de disco.")
+            return False
+
+        # Usar el disco principal (C: si existe, o el primero disponible)
+        disco_principal = particiones[0]
+        for p in particiones:
+            if p["nombre"] == "C:":
+                disco_principal = p
+                break
+
+        print(f"\n[INFO] Disco principal: {disco_principal['nombre']} "
+              f"({disco_principal['tipo']})")
         print(f"[INFO] RAM: {info_ram['total_gb']} GB total, "
               f"{info_ram['used_gb']} GB usado, "
               f"{info_ram['free_gb']} GB libre")
         print(f"[INFO] Uptime: {info_ram['uptime_seconds']} segundos\n")
 
-        for disco in particiones:
-            # Construir payload JSON con el formato del servidor
-            payload = {
-                "nodo": nodo,
-                "display_name": display_name,
-                "timestamp": time.time(),
-                "disco": {
-                    "nombre": disco["nombre"],
-                    "tipo": disco["tipo"],
-                    "total_gb": disco["total_gb"],
-                    "used_gb": disco["used_gb"],
-                    "free_gb": disco["free_gb"],
-                    "iops": disco["iops"],
-                },
-                "ram": {
-                    "total_gb": info_ram["total_gb"],
-                    "used_gb": info_ram["used_gb"],
-                    "free_gb": info_ram["free_gb"],
-                    "uptime_seconds": info_ram["uptime_seconds"],
-                },
-            }
+        # Construir payload JSON exacto para el servidor
+        payload = {
+            "nodo": nodo,
+            "display_name": display_name,
+            "timestamp": time.time(),
+            "disco": {
+                "nombre": disco_principal["nombre"],
+                "tipo": disco_principal["tipo"],
+                "total_gb": disco_principal["total_gb"],
+                "used_gb": disco_principal["used_gb"],
+                "free_gb": disco_principal["free_gb"],
+                "iops": disco_principal["iops"],
+            },
+            "ram": {
+                "total_gb": info_ram["total_gb"],
+                "used_gb": info_ram["used_gb"],
+                "free_gb": info_ram["free_gb"],
+                "uptime_seconds": info_ram["uptime_seconds"],
+            },
+        }
 
-            # Convertir a JSON y enviar
-            mensaje_json = json.dumps(payload, indent=2)
-            print(f"[Enviando] Disco {disco['nombre']}:")
-            print(mensaje_json)
+        # JSON compacto (sin indent) + salto de línea como terminador
+        mensaje_json = json.dumps(payload) + "\n"
 
-            cliente_socket.sendall(mensaje_json.encode("utf-8"))
-            print(f"[✓] Info de {disco['nombre']} enviada al servidor.\n")
+        # Mostrar en consola para debug
+        print(f"[Enviando payload]:")
+        print(json.dumps(payload, indent=2))
 
-            # Pequeña pausa entre envíos para no saturar
-            time.sleep(0.2)
-
-        print("[✓] Toda la información del sistema fue enviada.\n")
+        # Enviar al servidor
+        cliente_socket.sendall(mensaje_json.encode("utf-8"))
+        print(f"\n[✓] Info del sistema enviada al servidor.\n")
         return True
 
     except (BrokenPipeError, ConnectionResetError, OSError) as e:
         print(f"[!] Error al enviar info del sistema: {e}")
         return False
-
-
