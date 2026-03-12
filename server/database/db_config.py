@@ -7,12 +7,18 @@ NOTA: Rellene DB_PASSWORD con la contraseña real antes de arrancar.
 """
 
 # ── Credenciales Railway ───────────────────────────────────────────────────────
-DB_HOST:     str = "hopper.proxy.rlwy.net"
-DB_PORT:     int = 46975
-DB_USER:     str = "root"
-DB_PASSWORD: str = "YCDIrjByQIaluZLzAEXlifHCyNPTfZpu"          
-DB_NAME:     str = "railway"
-SSL_MODE:    str = "REQUIRED"
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
+
+DB_HOST:     str = os.getenv("DB_HOST", "hopper.proxy.rlwy.net")
+DB_PORT:     int = int(os.getenv("DB_PORT", "46975"))
+DB_USER:     str = os.getenv("DB_USER", "root")
+DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")          
+DB_NAME:     str = os.getenv("DB_NAME", "storage_cluster")
+SSL_MODE:    str = os.getenv("SSL_MODE", "REQUIRED")
 
 # ── Dict completo para el pool de conexiones ─────────────────────────────────
 DB_CONFIG: dict = {

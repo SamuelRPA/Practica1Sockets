@@ -160,140 +160,180 @@ async def _handle_client(
     peer = writer.get_extra_info("peername", ("?", "?"))
     logger.info("Conexión entrante desde %s:%s.", peer[0], peer[1])
 
-    buf = b""   # buffer acumulador para mensajes sin \n al final
+    buf_str = ""
+    decoder = json.JSONDecoder()
 
     try:
         while True:
-            # Leer chunk (hasta \n o hasta 64KB si no hay \n)
-            try:
-                chunk = await reader.readuntil(b"\n")
-            except asyncio.IncompleteReadError as e:
-                # EOF: el cliente cerró la conexión sin enviar \n
-                chunk = e.partial
-            except asyncio.LimitOverrunError:
-                chunk = await reader.read(65536)
+            chunk = await reader.read(4096)
+            if not chunk and not buf_str:
+                break
+                
+            if chunk:
+                buf_str += chunk.decode("utf-8", errors="replace")
 
-            buf += chunk
-
-            if not buf:
-                break  # conexión cerrada, buffer vacío
-
-            line = buf.decode("utf-8", errors="replace").strip()
-            buf = b""   # limpiar buffer tras consumir
-
-            if not line:
-                continue
-
-            # ── Decodificación JSON ──────────────────────────────────────────
-            try:
-                data = json.loads(line)
-            except json.JSONDecodeError as exc:
-                logger.warning(
-                    "Mensaje malformado desde %s:%s — ignorado. (%s)",
-                    peer[0], peer[1], exc,
-                )
-                if not chunk:   # no hay más datos que esperar
+            while buf_str:
+                buf_str = buf_str.lstrip()
+                if not buf_str:
                     break
-                continue
-
-            logger.info(
-                "DEBUG: Datos recibidos del cliente: llaves_raíz=%s | disco=%s",
-                list(data.keys()),
-                list((data.get("disco") or {}).keys()),
-            )
-
-            # ── Validación de timestamp (Modificación 1: Defensa) ───────────
-            ts_value = data.get("timestamp")
-            if ts_value is not None:
-                try:
-                    ts_float = float(ts_value)
-                    time_diff = abs(time.time() - ts_float)
-                    if time_diff > 60:
-                        logger.warning(
-                            "Desfase de tiempo detectado para nodo desde %s:%s — diff=%.1fs > 60s.",
-                            peer[0], peer[1], time_diff,
-                        )
-                        writer.write(b"ERROR: CONFIG_REQUIRED_TIME_MISMATCH\n")
+                    
+                start_idx = buf_str.find('{')
+                if start_idx == -1:
+                    bad_msg = buf_str.strip()
+                    if bad_msg:
+                        print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {bad_msg}")
+                        logger.warning("Mensaje malformado desde %s:%s — ignorado.", peer[0], peer[1])
+                        writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
                         await writer.drain()
-                        if not chunk:
-                            break
-                        continue
-                except (ValueError, TypeError):
-                    logger.debug("Campo 'timestamp' no es numérico, ignorando validación.")
-
-            # ── Respuesta inmediata al cliente (antes de procesar DB) ─────────
-            writer.write(b"OK\n")
-            await writer.drain()
-
-            # ── Extracción anidada con valores por defecto ────────────────────
-            if "nodo" not in data:
-                logger.warning(
-                    "Mensaje sin campo 'nodo' desde %s:%s — ignorado.",
-                    peer[0], peer[1],
-                )
-                if not chunk:
+                    buf_str = ""
                     break
-                continue
 
-            nodo = str(data["nodo"]).lower().strip()
-
-            total_gb       = data.get("disco", {}).get("total_gb",       0.0) or 0.0
-            used_gb        = data.get("disco", {}).get("used_gb",         data.get("disco", {}).get("usado_gb", 0.0)) or 0.0
-            free_gb        = data.get("disco", {}).get("free_gb",         data.get("disco", {}).get("libre_gb",  total_gb - used_gb)) or 0.0
-            iops           = data.get("disco", {}).get("iops",            0) or 0
-            disk_name      = data.get("disco", {}).get("nombre",          data.get("disco", {}).get("name", "unknown"))
-            disk_type      = data.get("disco", {}).get("tipo",            data.get("disco", {}).get("type", "HDD"))
-            ram_gb         = data.get("ram",   {}).get("total_gb",        0.0) or 0.0
-            uptime_seconds = data.get("uptime_seconds", data.get("ram", {}).get("uptime_seconds", 0)) or 0
-            display_name   = data.get("display_name", nodo)
-
-            total_gb       = float(total_gb)
-            used_gb        = float(used_gb)
-            free_gb        = float(free_gb)
-            iops           = int(iops)
-            ram_gb         = float(ram_gb)
-            uptime_seconds = int(uptime_seconds)
-            display_name   = str(display_name)
-            disk_name      = str(disk_name)
-            disk_type      = str(disk_type)
-
-            print(f"---> Recibido de '{nodo}': {total_gb} GB capacidad | {used_gb} GB usado | {free_gb} GB libre | RAM {ram_gb} GB")
-
-            payload = {
-                "identifier":     nodo,
-                "display_name":   display_name,
-                "total_gb":       total_gb,
-                "used_gb":        used_gb,
-                "free_gb":        free_gb,
-                "iops":           iops,
-                "disk_name":      disk_name,
-                "disk_type":      disk_type,
-                "ram_gb":         ram_gb,
-                "uptime_seconds": uptime_seconds,
-                "ip_origen":      str(data.get("ip_origen",  "")),
-                "mac_origen":     str(data.get("mac_origen", "")),
-                "estado":         str(data.get("estado", "Activo")),
-            }
-
-            # ── 1. GUARDAR EN MEMORIA (prioridad, siempre funciona) ───────────
-            active_nodes[nodo] = {**payload, "ts": datetime.utcnow()}
-            _register_client(nodo, writer)
-            print(f"[DEBUG] Nodo '{nodo}' procesado correctamente.")
-            logger.info("[DEBUG] Nodo '%s' procesado correctamente.", nodo)
-
-            # ── 2. ENVIAR A RAILWAY (si falla, el nodo sigue en memoria) ─────
-            if _on_metrics_received:
+                if start_idx > 0:
+                    bad_msg = buf_str[:start_idx].strip()
+                    if bad_msg:
+                        print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {bad_msg}")
+                        logger.warning("Mensaje con basura inicial desde %s:%s — limpiando.", peer[0], peer[1])
+                        writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
+                        await writer.drain()
+                    buf_str = buf_str[start_idx:]
+                
                 try:
-                    await _on_metrics_received(nodo, payload)
-                    logger.info("✅ Datos de '%s' enviados a DB.", nodo)
-                except Exception as exc:  # noqa: BLE001
-                    logger.error(
-                        "❌ Error al enviar datos de '%s' a DB: %s — nodo permanece en memoria.",
-                        nodo, exc,
-                    )
+                    data, end_idx = decoder.raw_decode(buf_str)
+                    raw_str = buf_str[:end_idx]
+                    buf_str = buf_str[end_idx:]
+                except json.JSONDecodeError:
+                    if len(buf_str) > 512 * 1024:
+                        logger.warning("Buffer overflow (malformed JSON) from %s:%s. Limpiando.", peer[0], peer[1])
+                        buf_str = ""
+                    # Not enough data for a complete JSON yet
+                    break
+                
+                print(f"[RAW RECEIVE] Contenido recibido: {raw_str}")
 
-            if not chunk:
-                break  # EOF alcanzado, no esperar más datos
+                logger.info(
+                    "DEBUG: Datos recibidos del cliente: llaves_raíz=%s | disco=%s",
+                    list(data.keys()) if isinstance(data, dict) else [],
+                    list((data.get("disco") or {}).keys()) if isinstance(data, dict) else [],
+                )
+
+                # ── Validación de ser una métrica válida ──────────────────────────
+                if not isinstance(data, dict) or "nodo" not in data:
+                    logger.warning(
+                        "Mensaje sin campo 'nodo' desde %s:%s — ignorado.",
+                        peer[0], peer[1],
+                    )
+                    writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
+                    await writer.drain()
+                    continue
+
+                nodo_raw = data["nodo"]
+                print(f"[SUCCESS] Paquete completo recibido de {nodo_raw}.")
+
+                # ── Validación de timestamp (Modificación 1: Defensa) ───────────
+                ts_value = data.get("timestamp")
+                if ts_value is not None:
+                    try:
+                        ts_float = float(ts_value)
+                        time_diff = abs(time.time() - ts_float)
+                        if time_diff > 60:
+                            logger.warning(
+                                "Desfase de tiempo detectado para nodo desde %s:%s — diff=%.1fs > 60s.",
+                                peer[0], peer[1], time_diff,
+                            )
+                            writer.write(b"ERROR: TIME_MISMATCH\n")
+                            await writer.drain()
+                            # MOD 1: No bloquear el guardado en RAM si la diferencia es mayor a 60s, simplemente informamos de error
+                            # continue  <- (removido para no bloquear registro en active_nodes)
+                    except (ValueError, TypeError):
+                        logger.debug("Campo 'timestamp' no es numérico, ignorando validación.")
+                else:
+                    print(f"[INFO] Cliente {peer[0]} no envió timestamp. Se ignora validación y se guardan datos en STATUS por ahora.")
+
+                # ── Respuesta inmediata al cliente (antes de procesar DB) ─────────
+                writer.write(b"OK\n")
+                await writer.drain()
+
+                # ── Extracción anidada directa (Mapeo de Datos) ───────────────────
+                nodo = str(nodo_raw).lower().strip()
+
+                try:
+                    total_gb = float(data['disco']['total_gb'])
+                except (KeyError, TypeError, ValueError):
+                    total_gb = float(data.get("disco", {}).get("total_gb", 0.0))
+
+                try:
+                    used_gb = float(data['disco']['used_gb'])
+                except (KeyError, TypeError, ValueError):
+                    used_gb = float(data.get("disco", {}).get("used_gb", data.get("disco", {}).get("usado_gb", 0.0)))
+
+                try:
+                    free_gb = float(data['disco']['free_gb'])
+                except (KeyError, TypeError, ValueError):
+                    free_gb = float(data.get("disco", {}).get("free_gb", data.get("disco", {}).get("libre_gb", total_gb - used_gb if total_gb and used_gb else 0.0)))
+
+                try:
+                    iops = int(data['disco']['iops'])
+                except (KeyError, TypeError, ValueError):
+                    iops = int(data.get("disco", {}).get("iops", 0))
+
+                try:
+                    disk_name = str(data['disco']['nombre'])
+                except (KeyError, TypeError, ValueError):
+                    disk_name = str(data.get("disco", {}).get("nombre", data.get("disco", {}).get("name", "unknown")))
+
+                try:
+                    disk_type = str(data['disco']['tipo'])
+                except (KeyError, TypeError, ValueError):
+                    disk_type = str(data.get("disco", {}).get("tipo", data.get("disco", {}).get("type", "HDD")))
+
+                try:
+                    ram_gb = float(data['ram']['total_gb'])
+                except (KeyError, TypeError, ValueError):
+                    ram_gb = float(data.get("ram", {}).get("total_gb", 0.0))
+
+                try:
+                    uptime_seconds = int(data['uptime_seconds'])
+                except (KeyError, TypeError, ValueError):
+                    uptime_seconds = int(data.get("uptime_seconds", data.get("ram", {}).get("uptime_seconds", 0)))
+
+                display_name = str(data.get("display_name", nodo))
+
+                print(f"---> Recibido de '{nodo}': {total_gb} GB capacidad | {used_gb} GB usado | {free_gb} GB libre | RAM {ram_gb} GB")
+
+                payload = {
+                    "identifier":     nodo,
+                    "display_name":   display_name,
+                    "total_gb":       total_gb,
+                    "used_gb":        used_gb,
+                    "free_gb":        free_gb,
+                    "iops":           iops,
+                    "disk_name":      disk_name,
+                    "disk_type":      disk_type,
+                    "ram_gb":         ram_gb,
+                    "uptime_seconds": uptime_seconds,
+                    "ip_origen":      str(data.get("ip_origen",  "")),
+                    "mac_origen":     str(data.get("mac_origen", "")),
+                    "estado":         str(data.get("estado", "Activo")),
+                    "disco":          data.get("disco", {}),
+                    "ram":            data.get("ram", {}),
+                }
+
+                # ── 1. GUARDAR EN MEMORIA (prioridad, siempre funciona) ───────────
+                active_nodes[nodo] = {**payload, "ts": datetime.utcnow()}
+                _register_client(nodo, writer)
+                print(f"[DEBUG] Nodo '{nodo}' procesado correctamente.")
+                logger.info("[DEBUG] Nodo '%s' procesado correctamente.", nodo)
+
+                # ── 2. ENVIAR A RAILWAY (si falla, el nodo sigue en memoria) ─────
+                if _on_metrics_received:
+                    try:
+                        await _on_metrics_received(nodo, payload)
+                        logger.info("✅ Datos de '%s' enviados a DB.", nodo)
+                    except Exception as exc:  # noqa: BLE001
+                        logger.error(
+                            "❌ Error al enviar datos de '%s' a DB: %s — nodo permanece en memoria.",
+                            nodo, exc,
+                        )
 
     except ConnectionResetError:
         logger.warning("Conexión reiniciada por el nodo '%s'.", nodo)

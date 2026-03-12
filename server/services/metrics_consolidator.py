@@ -108,9 +108,22 @@ def get_cluster_totals(exclude: set = None) -> dict:
     # Fuente de verdad: active_nodes del SocketServer (RAM-priority)
     source = {k: v for k, v in _net.active_nodes.items() if k not in excluded}
 
-    capacity_total = sum(v.get("total_gb", 0.0) for v in source.values())
-    free_total     = sum(v.get("free_gb",  0.0) for v in source.values())
-    used_total     = sum(v.get("used_gb",  0.0) for v in source.values())
+    def _safe_get(entry: dict, key: str, nested_key: str, fallback_key: str = "", default: float = 0.0) -> float:
+        try:
+            if "disco" in entry and isinstance(entry["disco"], dict) and entry["disco"]:
+                val = entry["disco"].get(nested_key, entry["disco"].get(fallback_key))
+                if val is not None:
+                    return float(val)
+            val = entry.get(key, entry.get(fallback_key))
+            if val is not None:
+                return float(val)
+            return float(default)
+        except (ValueError, TypeError, AttributeError):
+            return float(default)
+
+    capacity_total = sum(_safe_get(v, "total_gb", "total_gb") for v in source.values())
+    free_total     = sum(_safe_get(v, "free_gb", "free_gb", fallback_key="libre_gb") for v in source.values())
+    used_total     = sum(_safe_get(v, "used_gb", "used_gb", fallback_key="usado_gb") for v in source.values())
 
     logger.debug(
         "Totales cluster | nodos=%d (excluidos=%d) | capacity=%.2f | free=%.2f | used=%.2f",

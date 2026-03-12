@@ -9,23 +9,20 @@ def test_final():
             
             # Formato exacto para el Stored Procedure y el Monitor
             payload = {
-                "nodo": "cochabamba",
-                "display_name": "Cochabamba Central",
-                "disco": {
-                    "nombre": "C:",
-                    "tipo": "SSD",
-                    "total_gb": 1024.0,
-                    "used_gb": 200.0,
-                    "free_gb": 824.0,
-                    "iops": 400
-                },
-                "ram": {
-                    "total_gb": 16.0,
-                    "used_gb": 8.0,
-                    "free_gb": 8.0,
-                    "uptime_seconds": 3600
-                }
-            }
+    "nodo": "test_local",
+    "display_name": "Mi PC de Prueba",
+    "timestamp": time.time(),
+    "disco": {
+        "total_gb": 1024.0,
+        "used_gb": 500.0,
+        "free_gb": 524.0
+    },
+    "ram": {
+        "total_gb": 16.0,
+        "used_gb": 4.0,
+        "free_gb": 12.0
+    }
+}
             
             s.sendall((json.dumps(payload) + "\n").encode('utf-8'))
             print("🚀 Envío exitoso. Revisa la consola del servidor.")

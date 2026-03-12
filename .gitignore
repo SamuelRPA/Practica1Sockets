@@ -1,1 +1,13 @@
-venv/ 
+# Secretos y configuraciones
+.env
+
+# Entornos virtuales
+venv/
+.venv/
+
+# Archivos de log (Modificación 2)
+logs/*.log
+
+# Python caché
+__pycache__/
+*.py[cod]
