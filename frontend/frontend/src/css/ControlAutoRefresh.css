@@ -1,0 +1,98 @@
+/* src/css/controlAutoRefresh.css */
+/* ar = AutoRefresh - identificador único para este componente */
+
+.ar-contenedor {
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.ar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ar-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.ar-checkbox {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ar-select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #f9fafb;
+  font-size: 0.875rem;
+  color: black;
+}
+
+.ar-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #e5e7eb;
+}
+
+.ar-span {
+  font-size: 0.875rem;
+  color: #000000;
+}
+
+.ar-boton {
+  padding: 0.375rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ar-boton:hover {
+  background-color: #2563eb;
+}
+
+.ar-boton:active {
+  background-color: #1d4ed8;
+}
+
+.ar-timestamp {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Responsive para móviles */
+@media (max-width: 640px) {
+  .ar-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .ar-left {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .ar-timestamp {
+    text-align: center;
+  }
+}

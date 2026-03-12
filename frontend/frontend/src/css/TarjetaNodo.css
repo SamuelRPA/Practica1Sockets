@@ -1,0 +1,96 @@
+/* src/styles/TarjetaNodo.css */
+/* tj = Tarjeta */
+.tj-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s;
+}
+
+.tj-card.activo {
+  cursor: pointer;
+}
+
+.tj-card.activo:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.tj-card.inactivo {
+  opacity: 0.7;
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.tj-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.tj-nombre {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: black;
+}
+
+.tj-estado {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tj-estado.activo {
+  background-color: #013f1f;
+  color: #ffffff;
+}
+
+.tj-estado.inactivo {
+  background-color: #d71414;
+  color: #ffffff;
+}
+
+.tj-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tj-stat {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.tj-stat-value {
+  font-weight: 500;
+  color: black;
+}
+
+.tj-progress-container {
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  height: 0.625rem;
+}
+
+.tj-progress-bar {
+  background-color: #2563eb;
+  height: 0.625rem;
+  border-radius: 9999px;
+}
+
+.tj-progress-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.tj-empty {
+  color: #6b7280;
+  text-align: center;
+  padding: 1rem 0;
+}

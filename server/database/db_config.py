@@ -11,7 +11,7 @@ DB_HOST:     str = "hopper.proxy.rlwy.net"
 DB_PORT:     int = 46975
 DB_USER:     str = "root"
 DB_PASSWORD: str = "YCDIrjByQIaluZLzAEXlifHCyNPTfZpu"          
-DB_NAME:     str = "railway"
+DB_NAME:     str = "storage_cluster"
 SSL_MODE:    str = "REQUIRED"
 
 # ── Dict completo para el pool de conexiones ─────────────────────────────────
