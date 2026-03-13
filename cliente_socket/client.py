@@ -38,7 +38,7 @@ import time
 # Importar módulos del proyecto
 from network import (crear_socket, conectar, cerrar_conexion,
                      enviar_info_sistema, reenviar_log_pendiente,
-                     guardar_log_pendiente)
+                     guardar_log_pendiente, envio_periodico)
 from receiver import recibir_mensajes
 from sender import enviar_mensajes
 
@@ -148,6 +148,17 @@ def iniciar_cliente():
         daemon=True,
     )
     hilo_emisor.start()
+
+    # ── Paso 7: Crear e iniciar el thread PERIÓDICO ──
+    # Envía métricas del sistema cada 15 segundos
+    hilo_periodico = threading.Thread(
+        target=envio_periodico,
+        args=(cliente_socket, evento_activo, nodo, display_name, 15),
+        name="HiloPeriodico",
+        daemon=True,
+    )
+    hilo_periodico.start()
+    print("[INFO] Envío periódico activado (cada 15 segundos).")
 
     # ── Paso 7: Esperar a que los threads terminen ──
     # El thread emisor termina cuando el usuario escribe /salir

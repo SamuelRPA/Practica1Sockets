@@ -287,6 +287,80 @@ def enviar_info_sistema(cliente_socket, nodo, display_name):
         return False
 
 
+def envio_periodico(cliente_socket, evento_activo, nodo, display_name, intervalo=15):
+    """
+    Envía la info del sistema al servidor periódicamente.
+
+    Esta función está diseñada para ejecutarse en un thread independiente.
+    Cada 'intervalo' segundos, recopila la info actual del sistema
+    (disco, RAM, uptime) y la envía al servidor como JSON.
+
+    Args:
+        cliente_socket (socket.socket): Socket conectado al servidor.
+        evento_activo (threading.Event): Evento para controlar el ciclo.
+        nodo (str): Identificador del nodo.
+        display_name (str): Nombre visible del nodo.
+        intervalo (int): Segundos entre cada envío (default: 15).
+    """
+    # Esperar el primer intervalo antes de enviar
+    # (la info inicial ya se envió al conectar)
+    while evento_activo.is_set():
+        # wait() retorna False si expira el timeout, True si el evento se limpia
+        # Esto permite cancelar la espera inmediatamente al desconectar
+        if not evento_activo.wait(timeout=intervalo):
+            break
+
+        if not evento_activo.is_set():
+            break
+
+        try:
+            particiones = obtener_particiones()
+            info_ram = obtener_info_ram()
+
+            if not particiones:
+                continue
+
+            disco_principal = particiones[0]
+            for p in particiones:
+                if p["nombre"] == "C:":
+                    disco_principal = p
+                    break
+
+            payload = {
+                "nodo": nodo,
+                "display_name": display_name,
+                "timestamp": time.time(),
+                "disco": {
+                    "nombre": disco_principal["nombre"],
+                    "tipo": disco_principal["tipo"],
+                    "total_gb": disco_principal["total_gb"],
+                    "used_gb": disco_principal["used_gb"],
+                    "free_gb": disco_principal["free_gb"],
+                    "iops": disco_principal["iops"],
+                },
+                "ram": {
+                    "total_gb": info_ram["total_gb"],
+                    "used_gb": info_ram["used_gb"],
+                    "free_gb": info_ram["free_gb"],
+                    "uptime_seconds": info_ram["uptime_seconds"],
+                },
+            }
+
+            mensaje_json = json.dumps(payload) + "\n"
+            cliente_socket.sendall(mensaje_json.encode("utf-8"))
+            print(f"[AUTO] Métrica enviada al servidor ({intervalo}s)")
+
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            print("\n[!] Conexión perdida durante envío periódico.")
+            evento_activo.clear()
+            break
+        except OSError:
+            if evento_activo.is_set():
+                print("\n[!] Error de red en envío periódico.")
+            evento_activo.clear()
+            break
+
+
 # ═══════════════════════════════════════════════════════
 #  FUNCIONES DE LOG PENDIENTE (desconexión del servidor)
 # ═══════════════════════════════════════════════════════
