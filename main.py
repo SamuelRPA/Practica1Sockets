@@ -46,6 +46,7 @@ def _print_help() -> None:
         "\n║  STATUS            → Totales del cluster ║"
         "\n║  RESCAN  <node_id> → Enviar RESCAN        ║"
         "\n║  REBOOT  <node_id> → Enviar REBOOT        ║"
+        "\n║  MSG <nodo> <txt>  → Enviar mensaje texto ║"
         "\n║  HELP              → Mostrar esta ayuda   ║"
         "\n║  EXIT              → Detener el servidor  ║"
         "\n╚══════════════════════════════════════════╝\n"
@@ -96,7 +97,6 @@ def _console_worker(loop: asyncio.AbstractEventLoop, stop_event: asyncio.Event) 
             )
             logger.info("Consola: STATUS consultado.")
 
-        # ── RESCAN / REBOOT ───────────────────────────────────────────────────
         elif cmd in ("RESCAN", "REBOOT"):
             if not args:
                 print(f"  Uso: {cmd} <nodo>")
@@ -112,6 +112,23 @@ def _console_worker(loop: asyncio.AbstractEventLoop, stop_event: asyncio.Event) 
                 logger.info("Consola: comando '%s' enviado a '%s'.", cmd, nodo_id)
             else:
                 print(f"  ✘ No se pudo enviar '{cmd}' a '{nodo_id}' (nodo no conectado o error).")
+
+        # ── MSG (Mensaje de texto simple) ─────────────────────────────────────
+        elif cmd == "MSG":
+            if len(args) < 2:
+                print("  Uso: MSG <nodo> <mensaje_de_texto>")
+                continue
+            nodo_id = args[0]
+            mensaje = " ".join(args[1:])
+            future = asyncio.run_coroutine_threadsafe(
+                net.send_text_message(nodo_id, mensaje), loop
+            )
+            success = future.result(timeout=5.0)
+            if success:
+                print(f"  ✔ Mensaje enviado a '{nodo_id}' exitosamente.")
+                logger.info("Consola: MSG '%s' enviado a '%s'.", mensaje, nodo_id)
+            else:
+                print(f"  ✘ No se pudo enviar el mensaje a '{nodo_id}' (nodo no conectado o error).")
 
         # ── HELP ──────────────────────────────────────────────────────────────
         elif cmd == "HELP":

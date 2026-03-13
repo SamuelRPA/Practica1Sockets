@@ -138,8 +138,8 @@ def _validate_and_extract(message: dict) -> Optional[dict]:
         "ram_gb":         ram_gb,
         "uptime_seconds": uptime_seconds,
         # Campos extra para logging / memoria interna
-        "ip_origen":      str(message.get("ip_origen",  "")),
-        "mac_origen":     str(message.get("mac_origen", "")),
+        "ip_origen":      str(message.get("ip", message.get("ip_origen",  ""))),
+        "mac_origen":     str(message.get("mac", message.get("mac_origen", ""))),
         "estado":         str(message.get("estado", "Activo")),
     }
 
@@ -338,8 +338,8 @@ async def _handle_client(
                     "disk_type":      disk_type,
                     "ram_gb":         ram_gb,
                     "uptime_seconds": uptime_seconds,
-                    "ip_origen":      str(data.get("ip_origen",  "")),
-                    "mac_origen":     str(data.get("mac_origen", "")),
+                    "ip_origen":      str(data.get("ip", data.get("ip_origen",  ""))),
+                    "mac_origen":     str(data.get("mac", data.get("mac_origen", ""))),
                     "estado":         str(data.get("estado", "Activo")),
                     "disco":          data.get("disco", {}),
                     "ram":            data.get("ram", {}),

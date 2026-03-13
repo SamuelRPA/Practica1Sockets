@@ -96,6 +96,8 @@ class DBManager:
         disk_type: str,
         ram_gb: float,
         uptime_seconds: int = 0,
+        ip: str = "",
+        mac: str = "",
     ) -> bool:
         """
         Llama al Stored Procedure sp_InsertMetricAndUpdateNode.
@@ -138,6 +140,8 @@ class DBManager:
                     disk_type,
                     ram_gb,
                     uptime_seconds,
+                    ip,
+                    mac,
                 ),
             )
             logger.debug(

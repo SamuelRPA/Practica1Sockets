@@ -78,6 +78,8 @@ async def on_metrics_received(nodo: str, payload: dict) -> None:
                     disk_type     =payload["disk_type"],
                     ram_gb        =payload["ram_gb"],
                     uptime_seconds=payload.get("uptime_seconds", 0),
+                    ip            =payload.get("ip_origen", ""),
+                    mac           =payload.get("mac_origen", ""),
                 ),
             )
         except Exception as exc:  # noqa: BLE001
