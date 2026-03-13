@@ -5,7 +5,7 @@ Lógica de consolidación de métricas del cluster.
 Trabaja con el payload aplanado proveniente de socket_server._validate_and_extract().
 Campos en uso:
   identifier, display_name, total_gb, used_gb, free_gb, iops,
-  disk_name, disk_type, ram_gb, uptime_seconds
+  disk_name, disk_type, ram_gb, uptime_seconds, ip_origen, mac_origen
 
 Los totales para el comando STATUS se calculan EN TIEMPO REAL sumando los
 valores de socket_server.active_nodes, garantizando que el comando funcione
@@ -38,49 +38,70 @@ def set_db_callback(callback) -> None:
 
 # ── API principal ──────────────────────────────────────────────────────────────
 
-async def on_metrics_received(nodo: str, payload: dict) -> None:
+async def on_metrics_received(
+    nodo: str, 
+    payload: dict, 
+    ip_origen: str = "", 
+    mac_origen: str = "",
+    total_gb: float = 0,
+    used_gb: float = 0,
+    free_gb: float = 0,
+    iops: int = 0,
+    disk_name: str = "",
+    disk_type: str = "",
+    ram_gb: float = 0,
+    ram_usado: float = 0,
+    ram_porcentaje: float = 0,
+    cantidad_discos: int = 1,
+    discos: list = None
+) -> None:
     """
     Callback registrado en socket_server.
     Actualiza el estado local en memoria y persiste en DB de forma asíncrona.
-
-    NOTA: socket_server ya guardó el payload en active_nodes ANTES de llamar
-    a este callback (prioridad RAM). Aquí sólo mantenemos _node_metrics para
-    compatibilidad y lanzamos la persistencia DB.
-
-    Args:
-        nodo:    Identificador del nodo.
-        payload: Diccionario aplanado devuelto por _validate_and_extract().
     """
-    _node_metrics[nodo] = {**payload, "ts": datetime.utcnow()}
+    if discos is None:
+        discos = []
+        
+    _node_metrics[nodo] = {
+        **payload, 
+        "ts": datetime.utcnow(),
+        "total_gb": total_gb,
+        "used_gb": used_gb,
+        "free_gb": free_gb,
+        "cantidad_discos": cantidad_discos,
+        "discos": discos,
+        "ram_usado": ram_usado,
+        "ram_porcentaje": ram_porcentaje
+    }
 
     logger.debug(
-        "Consolidado | identifier='%s' | used_gb=%.2f | free_gb=%.2f | ram_gb=%.2f",
-        nodo,
-        payload.get("used_gb", 0.0),
-        payload.get("free_gb", 0.0),
-        payload.get("ram_gb", 0.0),
+        "Consolidado | %s | total=%.2f GB | usado=%.2f GB | discos=%d | IP=%s | MAC=%s",
+        nodo, total_gb, used_gb, cantidad_discos, ip_origen, mac_origen
     )
 
-    # Persistencia en DB (en thread pool para no bloquear asyncio)
+    # Persistencia en DB (solo los campos que están en la BD)
     if _db_save_callback:
         try:
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(
                 None,
                 lambda: _db_save_callback(
-                    identifier    =payload["identifier"],
-                    display_name  =payload.get("display_name", payload["identifier"]),
-                    total_gb      =payload["total_gb"],
-                    used_gb       =payload["used_gb"],
-                    free_gb       =payload["free_gb"],
-                    iops          =payload["iops"],
-                    disk_name     =payload["disk_name"],
-                    disk_type     =payload["disk_type"],
-                    ram_gb        =payload["ram_gb"],
-                    uptime_seconds=payload.get("uptime_seconds", 0),
+                    identifier    = nodo,
+                    display_name  = payload.get("display_name", nodo),
+                    total_gb      = total_gb,
+                    used_gb       = used_gb,
+                    free_gb       = free_gb,
+                    iops          = iops,
+                    disk_name     = disk_name,
+                    disk_type     = disk_type,
+                    ram_gb        = ram_gb,
+                    uptime_seconds= payload.get("uptime_seconds", 0),
+                    ip            = ip_origen,
+                    mac           = mac_origen
                 ),
             )
-        except Exception as exc:  # noqa: BLE001
+            logger.info(f"✅ Datos de {nodo} guardados en BD: {total_gb} GB total")
+        except Exception as exc:
             logger.error("Error al persistir métricas del nodo '%s': %s", nodo, exc)
 
 

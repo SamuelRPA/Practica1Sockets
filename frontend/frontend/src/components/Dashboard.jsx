@@ -1,40 +1,34 @@
-// src/components/Dashboard.jsx
+// src/components/Dashboard.jsx - VERSIÓN DE PRUEBA
 import React, { useState, useEffect } from 'react';
 import { getNodos } from '../services/api';
-import { useAutoRefresh } from '../hooks/useAutoRefresh';
-import { calcularMetricasCluster, obtenerNodosCompletos } from '../utils/calculosCluster';
-import ControlAutoRefresh from './ControlAutoRefresh';
+import { calcularMetricasCluster } from '../utils/calculosCluster';
 import TarjetaNodo from './TarjetaNodo';
 import '../css/dashboard.css';
 
 const Dashboard = ({ onSeleccionarNodo }) => {
   const [nodos, setNodos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
+
+  useEffect(() => {
+    cargarDatos();
+    const intervalo = setInterval(cargarDatos, 10000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   const cargarDatos = async () => {
     try {
-      const nodosData = await getNodos();
-      const nodosCompletos = obtenerNodosCompletos(nodosData);
-      setNodos(nodosCompletos);
+      console.log('🔄 Cargando datos...');
+      const data = await getNodos();
+      console.log('📊 Datos recibidos:', data);
+      setNodos(data);
+      setUltimaActualizacion(new Date());
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      console.error('❌ Error:', error);
     } finally {
       setCargando(false);
     }
   };
-
-  const {
-    intervalo,
-    setIntervalo,
-    activo,
-    setActivo,
-    ultimaActualizacion,
-    actualizarManual
-  } = useAutoRefresh(cargarDatos, 30);
-
-  useEffect(() => {
-    cargarDatos();
-  }, []);
 
   const metricasCluster = calcularMetricasCluster(nodos);
 
@@ -59,31 +53,31 @@ const Dashboard = ({ onSeleccionarNodo }) => {
             <p className="db-stat-label">Espacio Libre</p>
             <p className="db-stat-value">{metricasCluster.totalLibreTB} TB</p>
           </div>
-          <div className="db-stat-card blue">
+          <div className="db-stat-card purple">
             <p className="db-stat-label">Uso Global</p>
             <p className="db-stat-value">{metricasCluster.porcentajeUso}%</p>
           </div>
         </div>
         <p className="db-report-message">{metricasCluster.mensaje}</p>
+        {ultimaActualizacion && (
+          <p className="db-timestamp">
+            Última actualización: {ultimaActualizacion.toLocaleTimeString()}
+          </p>
+        )}
       </div>
 
-      <ControlAutoRefresh
-        intervalo={intervalo}
-        setIntervalo={setIntervalo}
-        activo={activo}
-        setActivo={setActivo}
-        ultimaActualizacion={ultimaActualizacion}
-        actualizarManual={actualizarManual}
-      />
-
       <div className="db-nodos-grid">
-        {nodos.map((nodo) => (
-          <TarjetaNodo
-            key={nodo.identifier}
-            nodo={nodo}
-            onClick={onSeleccionarNodo}
-          />
-        ))}
+        {nodos.length > 0 ? (
+          nodos.map((nodo) => (
+            <TarjetaNodo
+              key={nodo.identifier}
+              nodo={nodo}
+              onClick={onSeleccionarNodo}
+            />
+          ))
+        ) : (
+          <p>No hay nodos para mostrar</p>
+        )}
       </div>
     </div>
   );

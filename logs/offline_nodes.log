@@ -1,1 +1,3 @@
-Estado del Cluster: Todos los nodos operativos
+[2026-03-13T19:04:11.924728 UTC] Nodos sin reporte (1):
+------------------------------------------------------------
+  - chuquisaca           IP: 10.178.224.215     208.4s sin reportar

@@ -1,6 +1,9 @@
 // src/utils/calculosCluster.js
 export const calcularMetricasCluster = (nodos) => {
+  console.log('📊 calculosCluster.js - nodos recibidos:', nodos);
+  
   if (!nodos || nodos.length === 0) {
+    console.log('❌ No hay nodos');
     return {
       totalCapacidadTB: 0,
       totalUsadoTB: 0,
@@ -12,18 +15,37 @@ export const calcularMetricasCluster = (nodos) => {
     };
   }
 
-  // Contar nodos activos (los que tienen datos recientes)
-  const activos = nodos.filter(n => n.status === 'Activo' && n.total_gb > 0).length;
+  // Filtrar solo nodos ACTIVOS
+  const nodosActivos = nodos.filter(n => n.status === "Activo");
+  console.log('📊 Nodos activos:', nodosActivos);
   
   // Calcular totales
-  const totalCapacidad = nodos.reduce((sum, n) => sum + (n.total_gb || 0), 0);
-  const totalUsado = nodos.reduce((sum, n) => sum + (n.used_gb || 0), 0);
-  const totalLibre = nodos.reduce((sum, n) => sum + (n.free_gb || 0), 0);
+  let totalCapacidad = 0;
+  let totalUsado = 0;
+  let totalLibre = 0;
+  
+  nodosActivos.forEach(nodo => {
+    console.log(`🔍 Procesando ${nodo.display_name}:`, {
+      total_gb: nodo.total_gb,
+      used_gb: nodo.used_gb,
+      free_gb: nodo.free_gb
+    });
+    
+    totalCapacidad += nodo.total_gb || 0;
+    totalUsado += nodo.used_gb || 0;
+    totalLibre += nodo.free_gb || 0;
+  });
 
-  // Convertir a TB para mostrar
-  const totalCapacidadTB = totalCapacidad / 1000;
-  const totalUsadoTB = totalUsado / 1000;
-  const totalLibreTB = totalLibre / 1000;
+  console.log('📊 Totales calculados:', {
+    totalCapacidad,
+    totalUsado,
+    totalLibre
+  });
+
+  // Convertir a TB (dividir entre 1000)
+  const totalCapacidadTB = (totalCapacidad / 1000).toFixed(2);
+  const totalUsadoTB = (totalUsado / 1000).toFixed(2);
+  const totalLibreTB = (totalLibre / 1000).toFixed(2);
 
   // Porcentaje global
   const porcentajeUso = totalCapacidad > 0 
@@ -31,53 +53,12 @@ export const calcularMetricasCluster = (nodos) => {
     : 0;
 
   return {
-    totalCapacidadTB: totalCapacidadTB.toFixed(2),
-    totalUsadoTB: totalUsadoTB.toFixed(2),
-    totalLibreTB: totalLibreTB.toFixed(2),
+    totalCapacidadTB,
+    totalUsadoTB,
+    totalLibreTB,
     porcentajeUso,
-    nodosActivos: activos,
+    nodosActivos: nodosActivos.length,
     totalNodos: 9,
-    mensaje: `Reportaron ${activos} de 9`
+    mensaje: `Reportaron ${nodosActivos.length} de 9`
   };
-};
-
-export const obtenerNodosCompletos = (nodos) => {
-  // Lista fija de los 9 nodos requeridos
-  const todosLosNodos = [
-    { identifier: 'lapaz', display_name: 'La Paz' },
-    { identifier: 'cochabamba', display_name: 'Cochabamba' },
-    { identifier: 'santacruz', display_name: 'Santa Cruz' },
-    { identifier: 'oruro', display_name: 'Oruro' },
-    { identifier: 'potosi', display_name: 'Potosí' },
-    { identifier: 'chuquisaca', display_name: 'Chuquisaca' },
-    { identifier: 'tarija', display_name: 'Tarija' },
-    { identifier: 'beni', display_name: 'Beni' },
-    { identifier: 'pando', display_name: 'Pando' }
-  ];
-
-  // Mapear los nodos existentes
-  return todosLosNodos.map(nodoInfo => {
-    const existente = nodos.find(n => n.identifier === nodoInfo.identifier);
-    
-    if (existente) {
-      return {
-        ...existente,
-        display_name: nodoInfo.display_name // Asegurar nombre bonito
-      };
-    }
-
-    // Nodo que no reporta
-    return {
-      identifier: nodoInfo.identifier,
-      display_name: nodoInfo.display_name,
-      total_gb: 0,
-      used_gb: 0,
-      free_gb: 0,
-      iops: 0,
-      disk_type: 'N/A',
-      ram_gb: 0,
-      status: 'No Reporta',
-      last_seen: null
-    };
-  });
 };

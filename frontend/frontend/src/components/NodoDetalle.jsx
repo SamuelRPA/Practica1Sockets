@@ -3,22 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { getHistorialNodo, enviarComando } from '../services/api';
 import '../css/NodoDetalle.css';
 
-const NodoDetalle = ({ nodo, onVolver }) => {
+const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
   const [historial, setHistorial] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState('');
   const [errorHistorial, setErrorHistorial] = useState('');
+  const [nodo, setNodo] = useState(nodoInicial);
+  const [discoSeleccionado, setDiscoSeleccionado] = useState(0);
 
   useEffect(() => {
     cargarHistorial();
-  }, [nodo.identifier]);
+  }, [nodoInicial.identifier]);
 
   const cargarHistorial = async () => {
     setCargando(true);
     setErrorHistorial('');
     try {
       const data = await getHistorialNodo(nodo.identifier);
+      console.log('📊 Historial recibido:', data);
+      
       if (Array.isArray(data) && data.length > 0) {
         setHistorial(data);
       } else {
@@ -50,10 +54,26 @@ const NodoDetalle = ({ nodo, onVolver }) => {
     }
   };
 
-  const isActivo = nodo.status === 'Activo' && nodo.total_gb > 0;
-  const porcentajeUso = isActivo ? ((nodo.used_gb / nodo.total_gb) * 100).toFixed(1) : 0;
+  const isActivo = nodo.status === 'Activo';
+  
+  // Obtener discos (pueden venir como array o como objeto individual)
+  const discos = nodo.discos || (nodo.disco ? [nodo.disco] : []);
+  const cantidadDiscos = nodo.cantidad_discos || discos.length || 1;
+  
+  // Disco seleccionado para ver detalle
+  const discoActual = discos[discoSeleccionado] || {
+    nombre: 'C:',
+    total_gb: nodo.total_gb || 0,
+    used_gb: nodo.used_gb || 0,
+    free_gb: nodo.free_gb || 0,
+    tipo: nodo.disk_type || 'N/A',
+    iops: nodo.iops || 0
+  };
+  
+  const porcentajeUso = discoActual.total_gb > 0 
+    ? ((discoActual.used_gb / discoActual.total_gb) * 100).toFixed(1) 
+    : 0;
 
-  // Función para determinar clase de color según porcentaje
   const getBarraClass = (porcentaje) => {
     if (porcentaje > 80) return 'nd-historial-barra-roja';
     if (porcentaje > 60) return 'nd-historial-barra-amarilla';
@@ -74,28 +94,49 @@ const NodoDetalle = ({ nodo, onVolver }) => {
           </span>
         </div>
 
+        {/* Selector de discos (si hay múltiples) */}
+        {discos.length > 1 && (
+          <div className="nd-selector-discos">
+            <p className="nd-selector-label">
+              Discos disponibles ({cantidadDiscos}):
+            </p>
+            <div className="nd-selector-botones">
+              {discos.map((disco, index) => (
+                <button
+                  key={index}
+                  className={`nd-selector-boton ${index === discoSeleccionado ? 'activo' : ''}`}
+                  onClick={() => setDiscoSeleccionado(index)}
+                >
+                  {disco.nombre} ({disco.total_gb} GB)
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Información del disco seleccionado */}
         <div className="nd-stats-grid">
           <div className="nd-stat-card blue">
-            <p className="nd-stat-label">Total Disco</p>
-            <p className="nd-stat-value">{(nodo.total_gb / 1000).toFixed(2)} TB</p>
+            <p className="nd-stat-label">Disco {discoActual.nombre}</p>
+            <p className="nd-stat-value">{discoActual.total_gb?.toFixed(2) || 0} GB</p>
           </div>
           <div className="nd-stat-card yellow">
             <p className="nd-stat-label">Usado</p>
-            <p className="nd-stat-value">{(nodo.used_gb / 1000).toFixed(2)} TB</p>
+            <p className="nd-stat-value">{discoActual.used_gb?.toFixed(2) || 0} GB</p>
           </div>
           <div className="nd-stat-card green">
             <p className="nd-stat-label">Libre</p>
-            <p className="nd-stat-value">{(nodo.free_gb / 1000).toFixed(2)} TB</p>
+            <p className="nd-stat-value">{discoActual.free_gb?.toFixed(2) || 0} GB</p>
           </div>
           <div className="nd-stat-card purple">
-            <p className="nd-stat-label">RAM</p>
-            <p className="nd-stat-value">{nodo.ram_gb} GB</p>
+            <p className="nd-stat-label">Tipo</p>
+            <p className="nd-stat-value">{discoActual.tipo || 'N/A'}</p>
           </div>
         </div>
 
         <div className="nd-progress-container">
           <div className="nd-progress-header">
-            <span className="nd-progress-header-text">Uso del disco</span>
+            <span className="nd-progress-header-text">Uso del disco {discoActual.nombre}</span>
             <span className="nd-progress-header-porcentaje">{porcentajeUso}%</span>
           </div>
           <div className="nd-progress-bar-bg">
@@ -103,22 +144,41 @@ const NodoDetalle = ({ nodo, onVolver }) => {
           </div>
         </div>
 
+        {/* Información general del nodo (TOTALES) */}
         <div className="nd-info-grid">
           <div className="nd-info-item">
-            <p className="nd-info-label">Tipo de disco:</p>
-            <p className="nd-info-value">{nodo.disk_type || 'N/A'}</p>
+            <p className="nd-info-label">Total discos:</p>
+            <p className="nd-info-value">{cantidadDiscos}</p>
           </div>
           <div className="nd-info-item">
-            <p className="nd-info-label">IOPS:</p>
-            <p className="nd-info-value">{nodo.iops || 'N/A'}</p>
+            <p className="nd-info-label">Total capacidad:</p>
+            <p className="nd-info-value">{(nodo.total_gb || 0).toFixed(2)} GB</p>
           </div>
           <div className="nd-info-item">
-            <p className="nd-info-label">IP Origen:</p>
-            <p className="nd-info-value">{nodo.ip_origen || 'N/A'}</p>
+            <p className="nd-info-label">Total usado:</p>
+            <p className="nd-info-value">{(nodo.used_gb || 0).toFixed(2)} GB</p>
+          </div>
+          <div className="nd-info-item">
+            <p className="nd-info-label">Total libre:</p>
+            <p className="nd-info-value">{(nodo.free_gb || 0).toFixed(2)} GB</p>
+          </div>
+          <div className="nd-info-item">
+            <p className="nd-info-label">IP:</p>
+            <p className="nd-info-value">{nodo.ip || nodo.ip_origen || 'N/A'}</p>
           </div>
           <div className="nd-info-item">
             <p className="nd-info-label">MAC:</p>
-            <p className="nd-info-value">{nodo.mac_origen || 'N/A'}</p>
+            <p className="nd-info-value">{nodo.mac || nodo.mac_origen || 'N/A'}</p>
+          </div>
+          <div className="nd-info-item">
+            <p className="nd-info-label">RAM:</p>
+            <p className="nd-info-value">{nodo.ram_gb || 0} GB</p>
+          </div>
+          <div className="nd-info-item nd-info-item-full">
+            <p className="nd-info-label">Última actualización:</p>
+            <p className="nd-info-value">
+              {nodo.last_seen ? new Date(nodo.last_seen).toLocaleString() : 'N/A'}
+            </p>
           </div>
         </div>
       </div>
@@ -155,9 +215,9 @@ const NodoDetalle = ({ nodo, onVolver }) => {
         </div>
       </div>
 
-      {/* HISTORIAL MEJORADO - VERSIÓN CORREGIDA SIN TAILWIND */}
+      {/* HISTORIAL */}
       <div className="nd-historial-section">
-        <h3 className="nd-historial-title">Historial de uso del disco</h3>
+        <h3 className="nd-historial-title">Historial de uso (totales)</h3>
         
         {cargando ? (
           <p className="nd-historial-mensaje nd-historial-cargando">Cargando historial...</p>

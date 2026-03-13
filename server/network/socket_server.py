@@ -31,10 +31,19 @@ Formato JSON anidado (una línea terminada en \\n):
 {
   "tipo":       "comando",
   "comando":    "RESCAN" | "REBOOT" | ...,
+  "mensaje_id": int,          // ID del mensaje en la BD para trackear ACK
   "timestamp":  "ISO8601",
   "origen":     "admin@dashboard",
   "mensaje":    "string descriptivo",
   "id_mensaje": "uuid-string"
+}
+
+━━━ Protocolo de ACK (Nodo → Servidor) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+  "tipo":       "ack_mensaje",
+  "mensaje_id": int,          // ID del mensaje que se está confirmando
+  "nodo":       "string",     // nodo que envía el ACK
+  "timestamp":  float         // timestamp del ACK
 }
 """
 
@@ -43,7 +52,7 @@ import json
 import time
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Callable, Awaitable
 
 from server.utils.logger import get_logger
 
@@ -57,13 +66,20 @@ active_clients: dict[str, asyncio.StreamWriter] = {}
 last_seen: dict[str, datetime] = {}
 
 # Callback externo (inyectado por main.py)
-_on_metrics_received = None   # callable(nodo, parsed_payload) -> Awaitable
+_on_metrics_received = None   # callable(nodo, parsed_payload, ip_origen, mac_origen, ...) -> Awaitable
+_on_ack_received = None       # callable(mensaje_id) -> None (para actualizar BD)
 
 
 def set_metrics_callback(callback) -> None:
     """Registra la función a llamar cuando se recibe un mensaje de métricas."""
     global _on_metrics_received
     _on_metrics_received = callback
+
+
+def set_ack_callback(callback) -> None:
+    """Registra la función a llamar cuando se recibe un ACK de mensaje."""
+    global _on_ack_received
+    _on_ack_received = callback
 
 
 # ── Gestión de clientes ────────────────────────────────────────────────────────
@@ -196,6 +212,19 @@ async def _handle_client(
                     break
                 continue
 
+            # ── Verificar si es un ACK de mensaje ────────────────────────────
+            if data.get("tipo") == "ack_mensaje":
+                mensaje_id = data.get("mensaje_id")
+                nodo_ack = data.get("nodo", nodo)
+                if mensaje_id and _on_ack_received:
+                    logger.info(f"✅ ACK recibido para mensaje {mensaje_id} desde {nodo_ack}")
+                    # Llamar al callback para actualizar BD
+                    await _on_ack_received(mensaje_id)
+                # Responder al cliente
+                writer.write(b"ACK_OK\n")
+                await writer.drain()
+                continue
+
             logger.info(
                 "DEBUG: Datos recibidos del cliente: llaves_raíz=%s | disco=%s",
                 list(data.keys()),
@@ -237,25 +266,34 @@ async def _handle_client(
 
             nodo = str(data["nodo"]).lower().strip()
 
-            total_gb       = data.get("disco", {}).get("total_gb",       0.0) or 0.0
-            used_gb        = data.get("disco", {}).get("used_gb",         data.get("disco", {}).get("usado_gb", 0.0)) or 0.0
-            free_gb        = data.get("disco", {}).get("free_gb",         data.get("disco", {}).get("libre_gb",  total_gb - used_gb)) or 0.0
-            iops           = data.get("disco", {}).get("iops",            0) or 0
-            disk_name      = data.get("disco", {}).get("nombre",          data.get("disco", {}).get("name", "unknown"))
-            disk_type      = data.get("disco", {}).get("tipo",            data.get("disco", {}).get("type", "HDD"))
-            ram_gb         = data.get("ram",   {}).get("total_gb",        0.0) or 0.0
-            uptime_seconds = data.get("uptime_seconds", data.get("ram", {}).get("uptime_seconds", 0)) or 0
-            display_name   = data.get("display_name", nodo)
+            # ===== EXTRACCIÓN MEJORADA - PRIORIZA CAMPOS DIRECTOS =====
+            # Obtener valores, priorizando campos directos sobre el objeto "disco"
+            total_gb = data.get("total_gb", data.get("disco", {}).get("total_gb", 0.0))
+            used_gb = data.get("used_gb", data.get("disco", {}).get("used_gb", data.get("disco", {}).get("usado_gb", 0.0)))
+            free_gb = data.get("free_gb", data.get("disco", {}).get("free_gb", data.get("disco", {}).get("libre_gb", total_gb - used_gb)))
+            iops = data.get("iops", data.get("disco", {}).get("iops", 0))
+            disk_name = data.get("disk_name", data.get("disco", {}).get("nombre", data.get("disco", {}).get("name", "unknown")))
+            disk_type = data.get("disk_type", data.get("disco", {}).get("tipo", data.get("disco", {}).get("type", "HDD")))
+            ram_gb = data.get("ram_gb", data.get("ram", {}).get("total_gb", 0.0))
+            ram_usado = data.get("ram_usado", data.get("ram", {}).get("usado_gb", 0.0))
+            ram_porcentaje = data.get("ram_porcentaje", data.get("ram", {}).get("porcentaje_uso", 0.0))
+            cantidad_discos = data.get("cantidad_discos", 1)
+            discos = data.get("discos", [])
 
-            total_gb       = float(total_gb)
-            used_gb        = float(used_gb)
-            free_gb        = float(free_gb)
-            iops           = int(iops)
-            ram_gb         = float(ram_gb)
-            uptime_seconds = int(uptime_seconds)
-            display_name   = str(display_name)
-            disk_name      = str(disk_name)
-            disk_type      = str(disk_type)
+            # Log para depuración
+            logger.info(f"📊 Valores extraídos: total_gb={total_gb}, used_gb={used_gb}, free_gb={free_gb}, ram_gb={ram_gb}")
+
+            total_gb = float(total_gb)
+            used_gb = float(used_gb)
+            free_gb = float(free_gb)
+            iops = int(iops)
+            ram_gb = float(ram_gb)
+            ram_usado = float(ram_usado)
+            ram_porcentaje = float(ram_porcentaje)
+            uptime_seconds = data.get("uptime_seconds", 0)
+            display_name = data.get("display_name", nodo)
+            disk_name = str(disk_name)
+            disk_type = str(disk_type)
 
             print(f"---> Recibido de '{nodo}': {total_gb} GB capacidad | {used_gb} GB usado | {free_gb} GB libre | RAM {ram_gb} GB")
 
@@ -284,9 +322,27 @@ async def _handle_client(
             # ── 2. ENVIAR A RAILWAY (si falla, el nodo sigue en memoria) ─────
             if _on_metrics_received:
                 try:
-                    await _on_metrics_received(nodo, payload)
-                    logger.info("✅ Datos de '%s' enviados a DB.", nodo)
-                except Exception as exc:  # noqa: BLE001
+                    # Pasar TODOS los campos al callback
+                    await _on_metrics_received(
+                        nodo=nodo,
+                        payload=payload,
+                        ip_origen=data.get("ip_origen", ""),
+                        mac_origen=data.get("mac_origen", ""),
+                        total_gb=total_gb,
+                        used_gb=used_gb,
+                        free_gb=free_gb,
+                        iops=iops,
+                        disk_name=disk_name,
+                        disk_type=disk_type,
+                        ram_gb=ram_gb,
+                        ram_usado=ram_usado,
+                        ram_porcentaje=ram_porcentaje,
+                        cantidad_discos=cantidad_discos,
+                        discos=discos
+                    )
+                    logger.info("✅ Datos de '%s' enviados a DB (IP=%s, MAC=%s, discos=%d)", 
+                                nodo, data.get("ip_origen", ""), data.get("mac_origen", ""), cantidad_discos)
+                except Exception as exc:
                     logger.error(
                         "❌ Error al enviar datos de '%s' a DB: %s — nodo permanece en memoria.",
                         nodo, exc,
@@ -297,7 +353,7 @@ async def _handle_client(
 
     except ConnectionResetError:
         logger.warning("Conexión reiniciada por el nodo '%s'.", nodo)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error("Error inesperado en handler (nodo='%s'): %s", nodo, exc)
     finally:
         _unregister_client(nodo, writer)
@@ -315,9 +371,17 @@ async def send_command(
     comando: str,
     mensaje: str = "",
     origen: str = "admin@dashboard",
+    mensaje_id: int = None,  # ID del mensaje en BD para trackear ACK
 ) -> bool:
     """
     Envía un comando al nodo usando el formato JSON de salida acordado.
+
+    Args:
+        nodo: Identificador del nodo destino
+        comando: Comando a enviar (REBOOT, RESCAN, etc.)
+        mensaje: Mensaje descriptivo
+        origen: Origen del comando
+        mensaje_id: ID del mensaje en BD (para trackear ACK)
 
     Returns:
         True si el envío fue exitoso, False si el nodo no está conectado.
@@ -329,23 +393,30 @@ async def send_command(
         )
         return False
 
-    payload = json.dumps({
+    payload_dict = {
         "tipo":       "comando",
         "comando":    comando,
         "timestamp":  datetime.utcnow().isoformat(),
         "origen":     origen,
         "mensaje":    mensaje or f"Ejecutar {comando} en {nodo}",
         "id_mensaje": str(uuid.uuid4()),
-    })
+    }
+    
+    # Incluir mensaje_id si existe
+    if mensaje_id is not None:
+        payload_dict["mensaje_id"] = mensaje_id
+
+    payload = json.dumps(payload_dict)
 
     try:
         writer.write((payload + "\n").encode("utf-8"))
         await writer.drain()
         logger.info(
-            "Comando '%s' enviado a nodo '%s' (origen=%s).", comando, nodo, origen
+            "Comando '%s' enviado a nodo '%s' (origen=%s, msg_id=%s).", 
+            comando, nodo, origen, mensaje_id
         )
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error(
             "Error al enviar comando '%s' a nodo '%s': %s", comando, nodo, exc
         )
