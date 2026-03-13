@@ -19,6 +19,7 @@ import json
 import time
 import ctypes
 import subprocess
+import uuid
 
 # Archivo donde se guardan los datos pendientes si el servidor se desconecta
 ARCHIVO_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pending_log.json")
@@ -207,6 +208,45 @@ def obtener_info_ram():
         }
 
 
+def obtener_info_red():
+    """
+    Obtiene la dirección IP local y la dirección MAC del dispositivo.
+
+    - IP: Se obtiene conectando un socket UDP a un servidor externo
+      (sin enviar datos), lo que revela la IP de la interfaz de red activa.
+    - MAC: Se obtiene con uuid.getnode() que retorna la MAC como entero.
+
+    Returns:
+        dict: Diccionario con 'ip' y 'mac'.
+    """
+    # Obtener IP local
+    try:
+        # Truco: conectar UDP a una IP externa revela la IP local
+        # No se envían datos reales
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip_local = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip_local = "127.0.0.1"
+
+    # Obtener MAC address
+    try:
+        mac_int = uuid.getnode()
+        # Formatear como XX:XX:XX:XX:XX:XX
+        mac_str = ":".join(
+            f"{(mac_int >> (8 * i)) & 0xFF:02X}"
+            for i in range(5, -1, -1)
+        )
+    except Exception:
+        mac_str = "00:00:00:00:00:00"
+
+    return {
+        "ip": ip_local,
+        "mac": mac_str,
+    }
+
+
 def enviar_info_sistema(cliente_socket, nodo, display_name):
     """
     Construye el payload JSON con info del sistema y lo envía al servidor.
@@ -242,11 +282,14 @@ def enviar_info_sistema(cliente_socket, nodo, display_name):
                 disco_principal = p
                 break
 
+        info_red = obtener_info_red()
+
         print(f"\n[INFO] Disco principal: {disco_principal['nombre']} "
               f"({disco_principal['tipo']})")
         print(f"[INFO] RAM: {info_ram['total_gb']} GB total, "
               f"{info_ram['used_gb']} GB usado, "
               f"{info_ram['free_gb']} GB libre")
+        print(f"[INFO] IP: {info_red['ip']} | MAC: {info_red['mac']}")
         print(f"[INFO] Uptime: {info_ram['uptime_seconds']} segundos\n")
 
         # Construir payload JSON exacto para el servidor
@@ -254,6 +297,8 @@ def enviar_info_sistema(cliente_socket, nodo, display_name):
             "nodo": nodo,
             "display_name": display_name,
             "timestamp": time.time(),
+            "ip": info_red["ip"],
+            "mac": info_red["mac"],
             "disco": {
                 "nombre": disco_principal["nombre"],
                 "tipo": disco_principal["tipo"],
@@ -326,10 +371,14 @@ def envio_periodico(cliente_socket, evento_activo, nodo, display_name, intervalo
                     disco_principal = p
                     break
 
+            info_red = obtener_info_red()
+
             payload = {
                 "nodo": nodo,
                 "display_name": display_name,
                 "timestamp": time.time(),
+                "ip": info_red["ip"],
+                "mac": info_red["mac"],
                 "disco": {
                     "nombre": disco_principal["nombre"],
                     "tipo": disco_principal["tipo"],
@@ -394,10 +443,14 @@ def guardar_log_pendiente(nodo, display_name):
                 disco_principal = p
                 break
 
+        info_red = obtener_info_red()
+
         payload = {
             "nodo": nodo,
             "display_name": display_name,
             "timestamp": time.time(),
+            "ip": info_red["ip"],
+            "mac": info_red["mac"],
             "disco": {
                 "nombre": disco_principal["nombre"],
                 "tipo": disco_principal["tipo"],
