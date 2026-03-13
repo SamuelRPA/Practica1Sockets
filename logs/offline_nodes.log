@@ -1,1 +1,5 @@
-Estado del Cluster: Todos los nodos operativos
+[2026-03-13T02:09:12.771226 UTC] Nodos sin reporte (3):
+------------------------------------------------------------
+  - la paz               IP:                    931.5s sin reportar
+  - lapaz                IP:                    940.5s sin reportar
+  - santa cruz           IP:                    574.3s sin reportar

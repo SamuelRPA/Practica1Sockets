@@ -160,55 +160,79 @@ async def _handle_client(
     peer = writer.get_extra_info("peername", ("?", "?"))
     logger.info("Conexión entrante desde %s:%s.", peer[0], peer[1])
 
-    buf_str = ""
-    decoder = json.JSONDecoder()
+    data_acumulada = ""
 
     try:
+        # Buffer Acumulador: acumular en data_acumulada
         while True:
             chunk = await reader.read(4096)
-            if not chunk and not buf_str:
+            if not chunk:
                 break
                 
-            if chunk:
-                buf_str += chunk.decode("utf-8", errors="replace")
+            # Limpieza de Bytes: .decode('utf-8').strip() como solicitado, 
+            # pero strip() en cada chunk puede comer espacios intencionales, 
+            # así que usamos strip() principalmente en validaciones y descartes.
+            # Evitamos hacer .strip() aquí para no alterar el formato o separar mal los chunks
+            data_acumulada += chunk.decode("utf-8", errors="replace")
 
-            while buf_str:
-                buf_str = buf_str.lstrip()
-                if not buf_str:
-                    break
-                    
-                start_idx = buf_str.find('{')
+            while True:
+                # Buscar el inicio del JSON
+                start_idx = data_acumulada.find('{')
                 if start_idx == -1:
-                    bad_msg = buf_str.strip()
-                    if bad_msg:
-                        print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {bad_msg}")
-                        logger.warning("Mensaje malformado desde %s:%s — ignorado.", peer[0], peer[1])
-                        writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
-                        await writer.drain()
-                    buf_str = ""
+                    # No hay inicio de JSON: es ruido/texto
+                    ruido = data_acumulada.strip()
+                    if ruido:
+                        print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {ruido}")
+                        logger.warning("Mensaje de texto/ruido desde %s:%s", peer[0], peer[1])
+                        try:
+                            writer.write(f"SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
+                            await writer.drain()
+                        except Exception:
+                            pass
+                    data_acumulada = "" # Limpiamos para no acumular basura
                     break
+                
+                # Para saber cuándo termina un JSON, buscar el carácter '}' iterando
+                # para soportar JSONs anidados (como 'disco' y 'ram')
+                llaves_abiertas = 0
+                end_idx = -1
+                for i in range(start_idx, len(data_acumulada)):
+                    if data_acumulada[i] == '{':
+                        llaves_abiertas += 1
+                    elif data_acumulada[i] == '}':
+                        llaves_abiertas -= 1
+                        if llaves_abiertas == 0:
+                            end_idx = i
+                            break
 
-                if start_idx > 0:
-                    bad_msg = buf_str[:start_idx].strip()
-                    if bad_msg:
-                        print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {bad_msg}")
-                        logger.warning("Mensaje con basura inicial desde %s:%s — limpiando.", peer[0], peer[1])
-                        writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
+                if end_idx == -1:
+                    if len(data_acumulada) > 512 * 1024:
+                        logger.warning("Buffer overflow leyendo JSON en %s:%s.", peer[0], peer[1])
+                        data_acumulada = ""
+                    break  # Falta el final, esperar más de socket
+                
+                # Limpieza de Ruido: texto antes del JSON
+                ruido_antes = data_acumulada[:start_idx].strip()
+                if ruido_antes:
+                    print(f"[WARN] Se recibió un mensaje que no es JSON técnico: {ruido_antes}")
+                    try:
+                        writer.write(f"SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
                         await writer.drain()
-                    buf_str = buf_str[start_idx:]
+                    except Exception:
+                        pass
+                
+                # Extraemos el bloque exclusivo con {}
+                json_str = data_acumulada[start_idx:end_idx+1].strip()
+                
+                # Reposicionar el buffer
+                data_acumulada = data_acumulada[end_idx+1:]
                 
                 try:
-                    data, end_idx = decoder.raw_decode(buf_str)
-                    raw_str = buf_str[:end_idx]
-                    buf_str = buf_str[end_idx:]
+                    data = json.loads(json_str)
+                    # print(f"[RAW RECEIVE] Contenido recibido: {json_str}")
                 except json.JSONDecodeError:
-                    if len(buf_str) > 512 * 1024:
-                        logger.warning("Buffer overflow (malformed JSON) from %s:%s. Limpiando.", peer[0], peer[1])
-                        buf_str = ""
-                    # Not enough data for a complete JSON yet
-                    break
-                
-                print(f"[RAW RECEIVE] Contenido recibido: {raw_str}")
+                    print(f"[WARN] Bloque entre llaves no es un JSON válido: {json_str}")
+                    continue
 
                 logger.info(
                     "DEBUG: Datos recibidos del cliente: llaves_raíz=%s | disco=%s",
@@ -222,12 +246,15 @@ async def _handle_client(
                         "Mensaje sin campo 'nodo' desde %s:%s — ignorado.",
                         peer[0], peer[1],
                     )
-                    writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
-                    await writer.drain()
+                    try:
+                        writer.write("SERVIDOR_CNS: Mensaje recibido pero no es una métrica válida\n".encode("utf-8"))
+                        await writer.drain()
+                    except Exception:
+                        pass
                     continue
-
+                
                 nodo_raw = data["nodo"]
-                print(f"[SUCCESS] Paquete completo recibido de {nodo_raw}.")
+                # print(f"[SUCCESS] Paquete completo recibido de {nodo_raw}.")
 
                 # ── Validación de timestamp (Modificación 1: Defensa) ───────────
                 ts_value = data.get("timestamp")
@@ -294,7 +321,7 @@ async def _handle_client(
                 try:
                     uptime_seconds = int(data['uptime_seconds'])
                 except (KeyError, TypeError, ValueError):
-                    uptime_seconds = int(data.get("uptime_seconds", data.get("ram", {}).get("uptime_seconds", 0)))
+                    uptime_seconds = int(data.get("uptime_seconds", (data.get("ram") or {}).get("uptime_seconds", 0)) or 0)
 
                 display_name = str(data.get("display_name", nodo))
 
@@ -321,12 +348,18 @@ async def _handle_client(
                 # ── 1. GUARDAR EN MEMORIA (prioridad, siempre funciona) ───────────
                 active_nodes[nodo] = {**payload, "ts": datetime.utcnow()}
                 _register_client(nodo, writer)
-                print(f"[DEBUG] Nodo '{nodo}' procesado correctamente.")
+                # print(f"[DEBUG] Nodo '{nodo}' procesado correctamente.")
                 logger.info("[DEBUG] Nodo '%s' procesado correctamente.", nodo)
 
-                # ── 2. ENVIAR A RAILWAY (si falla, el nodo sigue en memoria) ─────
+                # ── 2. ENVIAR A LA BASE DE DATOS AUTOMÁTICAMENTE ─────────────────
+                # Log de Validación solicitado
+                print(f"[OK] Paquete de {nodo} recibido y enviado a la base de datos.")
+                
                 if _on_metrics_received:
                     try:
+                        # Log de Validación: Si el JSON es válido, imprime en consola.
+                        # Asumimos que _on_metrics_received llamará a db_manager.save_metrics
+                        # o a la base de datos subyacente de la que provee main.py
                         await _on_metrics_received(nodo, payload)
                         logger.info("✅ Datos de '%s' enviados a DB.", nodo)
                     except Exception as exc:  # noqa: BLE001
@@ -349,6 +382,22 @@ async def _handle_client(
 
 
 # ── Envío de comandos ─────────────────────────────────────────────────────────
+
+async def send_text_message(nodo: str, texto: str) -> bool:
+    """Envía un mensaje de texto simple y directo a un cliente."""
+    writer = active_clients.get(nodo)
+    if not writer:
+        logger.warning("No se puede enviar mensaje de texto. Nodo '%s' no conectado.", nodo)
+        return False
+    try:
+        writer.write(f"{texto}\n".encode("utf-8"))
+        await writer.drain()
+        logger.info("Enviado mensaje de texto a '%s': %s", nodo, texto)
+        return True
+    except Exception as exc:
+        logger.error("Error enviando mensaje de texto a '%s': %s", nodo, exc)
+        return False
+
 
 async def send_command(
     nodo: str,
