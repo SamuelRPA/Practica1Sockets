@@ -6,6 +6,7 @@ Lógica:
   - Cada MONITOR_INTERVAL segundos revisa todos los nodos conocidos.
   - Si un nodo no ha reportado en más de NODE_TIMEOUT segundos, se marca
     como 'No Reporta' en la DB y se emite una alerta de log.
+  - También elimina el nodo de active_nodes para que el frontend lo refleje inmediatamente.
   - Si el nodo vuelve a reportar, su estado se restaura a 'Activo'
     (gestionado por metrics_consolidator / db_manager.save_metrics).
 """
@@ -21,7 +22,7 @@ logger = get_logger("FailureMonitor")
 
 # ── Parámetros configurables ──────────────────────────────────────────────────
 MONITOR_INTERVAL: float = 5.0    # segundos entre cada revisión
-NODE_TIMEOUT: float = 30.0       # segundos sin reporte → 'No Reporta'
+NODE_TIMEOUT: float = 35.0       # segundos sin reporte → 'No Reporta'
 OFFLINE_LOG_INTERVAL: float = 15.0  # segundos entre cada escritura del log de offline
 
 # ── Callbacks externos (inyectados por main.py) ───────────────────────────────────
@@ -67,7 +68,8 @@ async def monitor_loop() -> None:
       1. Obtiene last_seen de socket_server.
       2. Calcula nodos que superaron NODE_TIMEOUT.
       3. Marca nodos como 'No Reporta' en DB (evitando duplicar alertas).
-      4. Elimina de _already_flagged los nodos que volvieron a reportar.
+      4. Elimina nodos de active_nodes para reflejar estado inmediatamente.
+      5. Elimina de _already_flagged los nodos que volvieron a reportar.
 
     Lanza como subtarea paralela: offline_nodes_logger (cada 15 s).
     """
@@ -102,7 +104,8 @@ async def monitor_loop() -> None:
                         inactive_seconds,
                     )
                     _already_flagged.add(node_id)
-                    await _apply_status_update(node_id, "No Reporta")
+                    # 🔥 Actualizar en BD y eliminar de active_nodes
+                    await _apply_status_update_and_cleanup(node_id, "No Reporta")
                 else:
                     logger.debug(
                         "Nodo '%s' continúa sin reportar (%.1fs de inactividad).",
@@ -120,21 +123,32 @@ async def monitor_loop() -> None:
                     _already_flagged.discard(node_id)
 
 
-async def _apply_status_update(node_id: str, status: str) -> None:
-    """Llama a _update_status de forma segura (sync o async)."""
-    if _update_status is None:
-        logger.debug("_apply_status_update: sin actualizador de estado configurado.")
-        return
+async def _apply_status_update_and_cleanup(node_id: str, status: str) -> None:
+    """
+    Actualiza el estado en BD y elimina el nodo de active_nodes.
+    """
+    # 1. Actualizar en BD
+    if _update_status is not None:
+        try:
+            result = _update_status(node_id, status)
+            if asyncio.iscoroutine(result):
+                await result
+            logger.info(f"✅ Estado en BD actualizado: {node_id} -> {status}")
+        except Exception as exc:
+            logger.error(f"Error actualizando estado en BD para {node_id}: {exc}")
+    
+    # 2. 🔥 FORZAR ELIMINACIÓN DE active_nodes
     try:
-        result = _update_status(node_id, status)
-        # Si es una corutina, esperarla
-        if asyncio.iscoroutine(result):
-            await result
-    except Exception as exc:  # noqa: BLE001
-        logger.error(
-            "Error al actualizar estado del nodo '%s' a '%s': %s",
-            node_id, status, exc,
-        )
+        # Importar socket_server directamente para acceder a active_nodes
+        from server.network import socket_server as net
+        
+        if node_id in net.active_nodes:
+            logger.info(f"🗑️ Eliminando {node_id} de active_nodes por inactividad")
+            del net.active_nodes[node_id]
+        if node_id in net.active_clients:
+            del net.active_clients[node_id]
+    except Exception as exc:
+        logger.error(f"Error eliminando {node_id} de active_nodes: {exc}")
 
 
 def get_flagged_nodes() -> list[str]:

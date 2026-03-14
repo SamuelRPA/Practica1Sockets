@@ -1,7 +1,7 @@
 """
 main.py
 Punto de entrada del CNS Server (Central Monitoring Server).
-VERSIÓN CON API HTTP PARA DASHBOARD REACT Y MENSAJES FUNCIONALES
+VERSIÓN CORREGIDA - USA EL ESTADO DE LA BD Y LIMPIA DATOS DE NODOS INACTIVOS
 """
 
 import asyncio
@@ -113,101 +113,102 @@ def get_nodos():
             # Buscar en los datos de la BD
             nodo_bd = next((n for n in nodos_bd if n["identifier"] == nodo_base["identifier"]), None)
             
-            # Determinar estado real (conectado o no)
-            if nodo_base["identifier"] in net.active_nodes:
-                # Cliente conectado → Activo
-                if nodo_bd:
-                    resultado.append({
-                        "id": nodo_bd.get("id"),
-                        "identifier": nodo_bd["identifier"],
-                        "display_name": nodo_bd["display_name"],
-                        "total_gb": float(nodo_bd.get("total_gb", 0)),
-                        "used_gb": float(nodo_bd.get("used_gb", 0)),
-                        "free_gb": float(nodo_bd.get("free_gb", 0)),
-                        "iops": int(nodo_bd.get("iops", 0)),
-                        "disk_type": nodo_bd.get("disk_type", "N/A"),
-                        "ram_gb": float(nodo_bd.get("ram_gb", 0)),
-                        "ip": nodo_bd.get("ip", ""),
-                        "mac": nodo_bd.get("mac", ""),
-                        "status": "Activo",
-                        "last_seen": nodo_bd.get("last_seen")
-                    })
+            # USAR EL ESTADO DE LA BD (ya actualizado por failure_monitor)
+            if nodo_bd:
+                status = nodo_bd.get("status", "No Reporta")
+                
+                # 🔥 Si está inactivo, los datos deben ser 0
+                if status == "Activo":
+                    total_gb = float(nodo_bd.get("total_gb", 0))
+                    used_gb = float(nodo_bd.get("used_gb", 0))
+                    free_gb = float(nodo_bd.get("free_gb", 0))
+                    iops = int(nodo_bd.get("iops", 0))
+                    disk_type = nodo_bd.get("disk_type", "N/A")
+                    ram_gb = float(nodo_bd.get("ram_gb", 0))
+                    ip = nodo_bd.get("ip", "")
+                    mac = nodo_bd.get("mac", "")
+                    discos = nodo_bd.get("discos", [])
                 else:
-                    resultado.append({
-                        "identifier": nodo_base["identifier"],
-                        "display_name": nodo_base["display_name"],
-                        "total_gb": 0,
-                        "used_gb": 0,
-                        "free_gb": 0,
-                        "iops": 0,
-                        "disk_type": "N/A",
-                        "ram_gb": 0,
-                        "ip": "",
-                        "mac": "",
-                        "status": "Activo",
-                        "last_seen": None
-                    })
+                    # Nodo inactivo: todos los datos a 0 o vacío
+                    total_gb = 0
+                    used_gb = 0
+                    free_gb = 0
+                    iops = 0
+                    disk_type = "N/A"
+                    ram_gb = 0
+                    ip = ""
+                    mac = ""
+                    discos = []
+                
+                resultado.append({
+                    "id": nodo_bd.get("id"),
+                    "identifier": nodo_bd["identifier"],
+                    "display_name": nodo_bd["display_name"],
+                    "total_gb": total_gb,
+                    "used_gb": used_gb,
+                    "free_gb": free_gb,
+                    "iops": iops,
+                    "disk_type": disk_type,
+                    "ram_gb": ram_gb,
+                    "ip": ip,
+                    "mac": mac,
+                    "status": status,
+                    "last_seen": nodo_bd.get("last_seen"),
+                    "discos": discos
+                })
             else:
-                # No está conectado
-                if nodo_bd:
-                    resultado.append({
-                        "id": nodo_bd.get("id"),
-                        "identifier": nodo_bd["identifier"],
-                        "display_name": nodo_bd["display_name"],
-                        "total_gb": float(nodo_bd.get("total_gb", 0)),
-                        "used_gb": float(nodo_bd.get("used_gb", 0)),
-                        "free_gb": float(nodo_bd.get("free_gb", 0)),
-                        "iops": int(nodo_bd.get("iops", 0)),
-                        "disk_type": nodo_bd.get("disk_type", "N/A"),
-                        "ram_gb": float(nodo_bd.get("ram_gb", 0)),
-                        "ip": nodo_bd.get("ip", ""),
-                        "mac": nodo_bd.get("mac", ""),
-                        "status": "No Reporta",
-                        "last_seen": nodo_bd.get("last_seen")
-                    })
-                else:
-                    resultado.append({
-                        "identifier": nodo_base["identifier"],
-                        "display_name": nodo_base["display_name"],
-                        "total_gb": 0,
-                        "used_gb": 0,
-                        "free_gb": 0,
-                        "iops": 0,
-                        "disk_type": "N/A",
-                        "ram_gb": 0,
-                        "ip": "",
-                        "mac": "",
-                        "status": "No Reporta",
-                        "last_seen": None
-                    })
+                # Nodo sin datos en BD
+                resultado.append({
+                    "identifier": nodo_base["identifier"],
+                    "display_name": nodo_base["display_name"],
+                    "total_gb": 0,
+                    "used_gb": 0,
+                    "free_gb": 0,
+                    "iops": 0,
+                    "disk_type": "N/A",
+                    "ram_gb": 0,
+                    "ip": "",
+                    "mac": "",
+                    "status": "No Reporta",
+                    "last_seen": None,
+                    "discos": []
+                })
         
-        logger.info(f"📊 Nodos enviados: {len(resultado)} total, {len(net.active_nodes)} activos")
+        # Log para depuración
+        activos = sum(1 for n in resultado if n["status"] == "Activo")
+        logger.info(f"📊 Nodos enviados: {len(resultado)} total, {activos} activos (desde BD)")
         return jsonify(resultado)
         
     except Exception as e:
         logger.error(f"Error en /api/nodos: {e}")
         return jsonify([])
+
+
 @app.route('/api/cluster/resumen', methods=['GET'])
 def get_resumen():
     try:
-        activos = list(net.active_nodes.keys())
+        # Obtener todos los nodos
+        nodos_response = get_nodos().json
+        activos = [n for n in nodos_response if n["status"] == "Activo"]
         
-        # Obtener datos de consolidator
-        flagged = monitor.get_flagged_nodes()
-        totals = consolidator.get_cluster_totals(exclude=set(flagged))
+        # Calcular totales solo de activos
+        total_capacidad = sum(n.get("total_gb", 0) for n in activos)
+        total_usado = sum(n.get("used_gb", 0) for n in activos)
+        total_libre = sum(n.get("free_gb", 0) for n in activos)
         
         return jsonify({
-            'total_capacidad_tb': totals['capacity_total'] / 1000,
-            'total_usado_tb': totals['used_total'] / 1000,
-            'total_libre_tb': totals['free_total'] / 1000,
+            'total_capacidad_tb': total_capacidad / 1000,
+            'total_usado_tb': total_usado / 1000,
+            'total_libre_tb': total_libre / 1000,
             'nodos_activos': len(activos),
             'total_nodos': 9,
-            'porcentaje_uso_global': (totals['used_total'] / totals['capacity_total'] * 100) if totals['capacity_total'] > 0 else 0,
+            'porcentaje_uso_global': (total_usado / total_capacidad * 100) if total_capacidad > 0 else 0,
             'mensaje': f"Reportaron {len(activos)} de 9"
         })
     except Exception as e:
         logger.error(f"Error en /api/cluster/resumen: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/nodos/<nodo_id>/historial', methods=['GET'])
 def get_historial_nodo(nodo_id):
@@ -247,6 +248,7 @@ def get_historial_nodo(nodo_id):
     except Exception as e:
         logger.error(f"Error en historial de {nodo_id}: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/mensajes/<nodo_id>', methods=['POST'])
 def enviar_mensaje(nodo_id):
@@ -297,7 +299,7 @@ def enviar_mensaje(nodo_id):
             logger.error(f"❌ Error en operación de BD: {e}")
             return jsonify({"status": "error", "mensaje": str(e)}), 500
         
-        # 3. Verificar si el nodo está conectado
+        # 3. Verificar si el nodo está conectado (para enviar por socket)
         if nodo_id not in net.active_nodes:
             logger.warning(f"⚠️ Nodo '{nodo_id}' no está conectado")
             return jsonify({
@@ -344,6 +346,7 @@ def enviar_mensaje(nodo_id):
         logger.error(f"Error general en enviar_mensaje: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 # ============================================
 # FUNCIONES DE CONSOLA Y DEPENDENCIAS
 # ============================================
@@ -351,6 +354,7 @@ def enviar_mensaje(nodo_id):
 def run_flask():
     """Ejecuta el servidor Flask en un hilo separado"""
     app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+
 
 def _wire_dependencies():
     """Conecta los módulos entre sí mediante callbacks"""
@@ -362,8 +366,10 @@ def _wire_dependencies():
     net.set_ack_callback(actualizar_ack_callback)
     logger.info("Dependencias inyectadas correctamente.")
 
+
 # Comandos disponibles para la consola
 AVAILABLE_COMMANDS = ["RESCAN", "REBOOT", "STATUS", "LIST", "HELP", "EXIT"]
+
 
 def _print_help():
     """Muestra los comandos disponibles en la consola"""
@@ -379,6 +385,7 @@ def _print_help():
         "\n║  EXIT              → Detener el servidor ║"
         "\n╚══════════════════════════════════════════╝\n"
     )
+
 
 def _console_worker(loop, stop_event):
     """Hilo que lee comandos del operador por stdin"""
@@ -402,19 +409,17 @@ def _console_worker(loop, stop_event):
             logger.info("Consola: LIST → %d nodo(s) activos.", len(nodes))
 
         elif cmd == "STATUS":
-            flagged = monitor.get_flagged_nodes()
-            totals = consolidator.get_cluster_totals(exclude=set(flagged))
-            all_nodes = list(net.active_nodes.keys())
-            reporting = [n for n in all_nodes if n not in flagged]
-            print(
-                f"\n  Cluster Summary\n"
-                f"  ├─ Nodos reportando : {len(reporting)} → {reporting if reporting else 'ninguno'}\n"
-                f"  ├─ Capacity Total   : {totals['capacity_total']:.2f} GB\n"
-                f"  ├─ Used Total       : {totals['used_total']:.2f} GB\n"
-                f"  ├─ Free Total       : {totals['free_total']:.2f} GB\n"
-                f"  └─ Sin reporte      : {flagged if flagged else 'ninguno'}\n"
-            )
-            logger.info("Consola: STATUS consultado.")
+            # Usar el resumen de la API
+            try:
+                resumen = get_resumen().json
+                print(f"\n  Cluster Summary\n"
+                      f"  ├─ Nodos activos  : {resumen['nodos_activos']} de 9\n"
+                      f"  ├─ Capacidad Total: {resumen['total_capacidad_tb']:.2f} TB\n"
+                      f"  ├─ Usado Total    : {resumen['total_usado_tb']:.2f} TB\n"
+                      f"  ├─ Libre Total    : {resumen['total_libre_tb']:.2f} TB\n"
+                      f"  └─ Uso Global     : {resumen['porcentaje_uso_global']:.2f}%\n")
+            except Exception as e:
+                print(f"  ✘ Error obteniendo resumen: {e}")
 
         elif cmd in ("RESCAN", "REBOOT"):
             if not args:
@@ -465,6 +470,7 @@ def _console_worker(loop, stop_event):
         else:
             print(f"  Comando desconocido: '{cmd}'. Escribe HELP para ver opciones.")
 
+
 # ============================================
 # MAIN
 # ============================================
@@ -503,6 +509,7 @@ async def main():
         server_task.cancel()
         await asyncio.gather(monitor_task, server_task, return_exceptions=True)
         logger.info("Servidor CNS detenido. Hasta luego.")
+
 
 if __name__ == "__main__":
     try:

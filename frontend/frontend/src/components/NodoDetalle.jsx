@@ -1,23 +1,48 @@
 // src/components/NodoDetalle.jsx
 import React, { useState, useEffect } from 'react';
 import { getHistorialNodo, enviarComando } from '../services/api';
+import { useNodoEnTiempoReal } from '../hooks/useNodoEnTiempoReal';
 import '../css/NodoDetalle.css';
 
 const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
   const [historial, setHistorial] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  const [cargandoHistorial, setCargandoHistorial] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [mensajeEnvio, setMensajeEnvio] = useState('');
   const [errorHistorial, setErrorHistorial] = useState('');
-  const [nodo, setNodo] = useState(nodoInicial);
   const [discoSeleccionado, setDiscoSeleccionado] = useState(0);
+  const [contadorHistorial, setContadorHistorial] = useState(5); // Contador para historial
+  
+  // Usar el hook de tiempo real
+  const { nodo, discos, ultimaActualizacion } = useNodoEnTiempoReal(nodoInicial);
 
+  // Cargar historial al montar y cada 5 segundos
   useEffect(() => {
     cargarHistorial();
-  }, [nodoInicial.identifier]);
+    
+    // Actualizar historial cada 5 segundos
+    const intervaloHistorial = setInterval(() => {
+      cargarHistorial();
+    }, 20000);
+    
+    // Contador regresivo para el historial
+    const contador = setInterval(() => {
+      setContadorHistorial(prev => {
+        if (prev <= 1) {
+          return 20; // Reiniciar cuando llegue a 0
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => {
+      clearInterval(intervaloHistorial);
+      clearInterval(contador);
+    };
+  }, [nodo.identifier]);
 
   const cargarHistorial = async () => {
-    setCargando(true);
+    setCargandoHistorial(true);
     setErrorHistorial('');
     try {
       const data = await getHistorialNodo(nodo.identifier);
@@ -33,7 +58,7 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
       console.error('Error cargando historial:', error);
       setErrorHistorial('Error al cargar el historial');
     } finally {
-      setCargando(false);
+      setCargandoHistorial(false);
     }
   };
 
@@ -56,12 +81,11 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
 
   const isActivo = nodo.status === 'Activo';
   
-  // Obtener discos (pueden venir como array o como objeto individual)
-  const discos = nodo.discos || (nodo.disco ? [nodo.disco] : []);
-  const cantidadDiscos = nodo.cantidad_discos || discos.length || 1;
+  // Usar los discos del hook (actualizados en tiempo real)
+  const discosActuales = discos.length > 0 ? discos : (nodo.discos || []);
+  const cantidadDiscos = discosActuales.length || 1;
   
-  // Disco seleccionado para ver detalle
-  const discoActual = discos[discoSeleccionado] || {
+  const discoActual = discosActuales[discoSeleccionado] || {
     nombre: 'C:',
     total_gb: nodo.total_gb || 0,
     used_gb: nodo.used_gb || 0,
@@ -86,6 +110,15 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
         ← Volver al Dashboard
       </button>
 
+      {/* Indicador de actualización en tiempo real */}
+      <div className="nd-actualizacion">
+        <span className="nd-actualizacion-icono">🔄</span>
+        <span className="nd-actualizacion-texto">
+          Nodo actualizado: {ultimaActualizacion.toLocaleTimeString()}
+          {cantidadDiscos > 0 && ` • ${cantidadDiscos} disco(s)`}
+        </span>
+      </div>
+
       <div className="nd-card">
         <div className="nd-header">
           <h2 className="nd-title">{nodo.display_name}</h2>
@@ -95,19 +128,19 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
         </div>
 
         {/* Selector de discos (si hay múltiples) */}
-        {discos.length > 1 && (
+        {discosActuales.length > 1 && (
           <div className="nd-selector-discos">
             <p className="nd-selector-label">
               Discos disponibles ({cantidadDiscos}):
             </p>
             <div className="nd-selector-botones">
-              {discos.map((disco, index) => (
+              {discosActuales.map((disco, index) => (
                 <button
                   key={index}
                   className={`nd-selector-boton ${index === discoSeleccionado ? 'activo' : ''}`}
                   onClick={() => setDiscoSeleccionado(index)}
                 >
-                  {disco.nombre} ({disco.total_gb} GB)
+                  {disco.nombre} ({disco.total_gb} GB - {disco.tipo})
                 </button>
               ))}
             </div>
@@ -144,7 +177,7 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
           </div>
         </div>
 
-        {/* Información general del nodo (TOTALES) */}
+        {/* Información general del nodo */}
         <div className="nd-info-grid">
           <div className="nd-info-item">
             <p className="nd-info-label">Total discos:</p>
@@ -215,11 +248,19 @@ const NodoDetalle = ({ nodo: nodoInicial, onVolver }) => {
         </div>
       </div>
 
-      {/* HISTORIAL */}
+      {/* HISTORIAL CON CONTADOR */}
       <div className="nd-historial-section">
-        <h3 className="nd-historial-title">Historial de uso (totales)</h3>
+        <div className="nd-historial-header">
+          <h3 className="nd-historial-title">Historial de uso</h3>
+          <div className="nd-historial-contador">
+            <span className="nd-historial-contador-label">Actualizando en:</span>
+            <span className={`nd-historial-contador-valor ${contadorHistorial <= 3 ? 'finalizando' : ''}`}>
+              {contadorHistorial}s
+            </span>
+          </div>
+        </div>
         
-        {cargando ? (
+        {cargandoHistorial ? (
           <p className="nd-historial-mensaje nd-historial-cargando">Cargando historial...</p>
         ) : errorHistorial ? (
           <p className="nd-historial-mensaje nd-historial-error">{errorHistorial}</p>

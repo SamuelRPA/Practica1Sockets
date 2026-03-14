@@ -1,45 +1,50 @@
-// src/components/Dashboard.jsx - VERSIÓN DE PRUEBA
-import React, { useState, useEffect } from 'react';
+// src/components/Dashboard.jsx
+import React, { useState, useEffect, useCallback } from 'react';
 import { getNodos } from '../services/api';
 import { calcularMetricasCluster } from '../utils/calculosCluster';
+import { useTarjetasEnTiempoReal } from '../hooks/useTarjetasEnTiempoReal';
 import TarjetaNodo from './TarjetaNodo';
 import '../css/dashboard.css';
 
 const Dashboard = ({ onSeleccionarNodo }) => {
-  const [nodos, setNodos] = useState([]);
+  const [nodosIniciales, setNodosIniciales] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
 
-  useEffect(() => {
-    cargarDatos();
-    const intervalo = setInterval(cargarDatos, 10000);
-    return () => clearInterval(intervalo);
-  }, []);
+  // Usar el hook que se actualiza cada 5 segundos
+  const nodos = useTarjetasEnTiempoReal(nodosIniciales);
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
-      console.log('🔄 Cargando datos...');
       const data = await getNodos();
-      console.log('📊 Datos recibidos:', data);
-      setNodos(data);
+      setNodosIniciales(data);
       setUltimaActualizacion(new Date());
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('Error:', error);
     } finally {
       setCargando(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    cargarDatos();
+    
+    const intervalo = setInterval(cargarDatos, 15000); // 15 segundos sin contador visible
+    
+    return () => {
+      clearInterval(intervalo);
+    };
+  }, [cargarDatos]);
 
   const metricasCluster = calcularMetricasCluster(nodos);
 
-  if (cargando) {
-    return <div className="db-container">Cargando...</div>;
-  }
+  if (cargando) return <div className="db-container">Cargando...</div>;
 
   return (
     <div className="db-container">
       <div className="db-header">
         <h1 className="db-title">Monitor Nacional de Almacenamiento</h1>
+
         <div className="db-stats-grid">
           <div className="db-stat-card blue">
             <p className="db-stat-label">Capacidad Total</p>
@@ -67,17 +72,13 @@ const Dashboard = ({ onSeleccionarNodo }) => {
       </div>
 
       <div className="db-nodos-grid">
-        {nodos.length > 0 ? (
-          nodos.map((nodo) => (
-            <TarjetaNodo
-              key={nodo.identifier}
-              nodo={nodo}
-              onClick={onSeleccionarNodo}
-            />
-          ))
-        ) : (
-          <p>No hay nodos para mostrar</p>
-        )}
+        {nodos.map((nodo) => (
+          <TarjetaNodo
+            key={nodo.identifier}
+            nodo={nodo}
+            onClick={onSeleccionarNodo}
+          />
+        ))}
       </div>
     </div>
   );

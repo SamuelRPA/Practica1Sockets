@@ -3,7 +3,12 @@ import React from 'react';
 import '../css/tarjetaNodo.css';
 
 const TarjetaNodo = ({ nodo, onClick }) => {
-  const isActivo = nodo.status === 'Activo' && nodo.total_gb > 0;
+  // Calcular si está activo basado en last_seen (últimos 30 segundos)
+  const ahora = new Date();
+  const ultimaVez = nodo.last_seen ? new Date(nodo.last_seen) : null;
+  const tiempoTranscurrido = ultimaVez ? (ahora - ultimaVez) / 1000 : 999;
+  const isActivo = nodo.status === 'Activo' && tiempoTranscurrido < 35; // 35 segundos de tolerancia
+  
   const porcentajeUso = isActivo ? ((nodo.used_gb / nodo.total_gb) * 100).toFixed(1) : 0;
 
   return (

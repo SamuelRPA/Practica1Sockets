@@ -3,12 +3,11 @@ export const calcularMetricasCluster = (nodos) => {
   console.log('📊 calculosCluster.js - nodos recibidos:', nodos);
   
   if (!nodos || nodos.length === 0) {
-    console.log('❌ No hay nodos');
     return {
-      totalCapacidadTB: 0,
-      totalUsadoTB: 0,
-      totalLibreTB: 0,
-      porcentajeUso: 0,
+      totalCapacidadTB: '0.00',
+      totalUsadoTB: '0.00',
+      totalLibreTB: '0.00',
+      porcentajeUso: '0',
       nodosActivos: 0,
       totalNodos: 9,
       mensaje: 'Reportaron 0 de 9'
@@ -19,13 +18,13 @@ export const calcularMetricasCluster = (nodos) => {
   const nodosActivos = nodos.filter(n => n.status === "Activo");
   console.log('📊 Nodos activos:', nodosActivos);
   
-  // Calcular totales
+  // Calcular totales SOLO de nodos activos
   let totalCapacidad = 0;
   let totalUsado = 0;
   let totalLibre = 0;
   
   nodosActivos.forEach(nodo => {
-    console.log(`🔍 Procesando ${nodo.display_name}:`, {
+    console.log(`🔍 Procesando ${nodo.display_name} (ACTIVO):`, {
       total_gb: nodo.total_gb,
       used_gb: nodo.used_gb,
       free_gb: nodo.free_gb
@@ -36,21 +35,21 @@ export const calcularMetricasCluster = (nodos) => {
     totalLibre += nodo.free_gb || 0;
   });
 
-  console.log('📊 Totales calculados:', {
+  console.log('📊 Totales calculados (solo activos):', {
     totalCapacidad,
     totalUsado,
     totalLibre
   });
 
   // Convertir a TB (dividir entre 1000)
-  const totalCapacidadTB = (totalCapacidad / 1000).toFixed(2);
-  const totalUsadoTB = (totalUsado / 1000).toFixed(2);
-  const totalLibreTB = (totalLibre / 1000).toFixed(2);
+  const totalCapacidadTB = totalCapacidad > 0 ? (totalCapacidad / 1000).toFixed(2) : '0.00';
+  const totalUsadoTB = totalUsado > 0 ? (totalUsado / 1000).toFixed(2) : '0.00';
+  const totalLibreTB = totalLibre > 0 ? (totalLibre / 1000).toFixed(2) : '0.00';
 
-  // Porcentaje global
+  // Porcentaje global - si no hay activos, mostrar 0
   const porcentajeUso = totalCapacidad > 0 
     ? ((totalUsado / totalCapacidad) * 100).toFixed(2)
-    : 0;
+    : '0';
 
   return {
     totalCapacidadTB,
